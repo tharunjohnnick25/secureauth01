@@ -1,0 +1,245 @@
+-- ==========================================
+-- MULTI-FACTOR RISK-BASED AUTHENTICATION DB
+-- ==========================================
+
+-- Enable extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "postgis"; -- for geo_locations
+
+-- 1. Roles
+CREATE TABLE IF NOT EXISTS public.roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. Permissions
+CREATE TABLE IF NOT EXISTS public.permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    action VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Role Permissions Mapping
+CREATE TABLE IF NOT EXISTS public.role_permissions (
+    role_id UUID REFERENCES public.roles(id) ON DELETE CASCADE,
+    permission_id UUID REFERENCES public.permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
+
+-- 3. Users (Profile extending auth.users)
+CREATE TABLE IF NOT EXISTS public.users (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    phone VARCHAR(20),
+    role_id UUID REFERENCES public.roles(id),
+    is_mfa_enabled BOOLEAN DEFAULT FALSE,
+    mfa_secret TEXT,
+    status VARCHAR(20) DEFAULT 'active', -- active, locked, suspended
+    failed_login_attempts INT DEFAULT 0,
+    lockout_until TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4. Devices
+CREATE TABLE IF NOT EXISTS public.devices (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    device_id VARCHAR(255) UNIQUE NOT NULL,
+    device_name VARCHAR(100),
+    browser VARCHAR(100),
+    os VARCHAR(100),
+    is_trusted BOOLEAN DEFAULT FALSE,
+    last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 5. Sessions
+CREATE TABLE IF NOT EXISTS public.sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    device_id UUID REFERENCES public.devices(id) ON DELETE CASCADE,
+    session_token VARCHAR(500) UNIQUE NOT NULL,
+    ip_address INET,
+    user_agent TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 6. Geo Locations
+CREATE TABLE IF NOT EXISTS public.geo_locations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    session_id UUID REFERENCES public.sessions(id) ON DELETE SET NULL,
+    ip_address INET,
+    city VARCHAR(100),
+    country VARCHAR(100),
+    latitude NUMERIC,
+    longitude NUMERIC,
+    is_suspicious BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 7. Device Fingerprint
+CREATE TABLE IF NOT EXISTS public.device_fingerprint (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    device_id UUID REFERENCES public.devices(id) ON DELETE CASCADE,
+    fingerprint_hash TEXT UNIQUE NOT NULL,
+    canvas_hash TEXT,
+    webgl_hash TEXT,
+    hardware_concurrency INT,
+    device_memory INT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 8. Typing Behavior
+CREATE TABLE IF NOT EXISTS public.typing_behavior (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    flight_time_avg NUMERIC,
+    dwell_time_avg NUMERIC,
+    error_rate NUMERIC,
+    profile_confidence_score NUMERIC,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 9. Risk Scores
+CREATE TABLE IF NOT EXISTS public.risk_scores (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    session_id UUID REFERENCES public.sessions(id) ON DELETE CASCADE,
+    score NUMERIC NOT NULL, -- 0.0 to 100.0
+    risk_level VARCHAR(20), -- low, medium, high, critical
+    factors JSONB, -- reason for the score
+    evaluated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 10. Login History
+CREATE TABLE IF NOT EXISTS public.login_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    device_id UUID REFERENCES public.devices(id) ON DELETE SET NULL,
+    ip_address INET,
+    status VARCHAR(20), -- success, failed, mfa_required, locked
+    failure_reason TEXT,
+    risk_score_id UUID REFERENCES public.risk_scores(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 11. Alerts
+CREATE TABLE IF NOT EXISTS public.alerts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    type VARCHAR(50), -- new_device, suspicious_location, high_risk_login, multiple_failures
+    severity VARCHAR(20), -- info, warning, critical
+    message TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Audit Logs
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    resource VARCHAR(100),
+    details JSONB,
+    ip_address INET,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 13. Notifications
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    body TEXT,
+    type VARCHAR(50), -- email, push, sms
+    status VARCHAR(20) DEFAULT 'pending', -- pending, sent, failed
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 14. OAuth Accounts
+CREATE TABLE IF NOT EXISTS public.oauth_accounts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    provider_account_id VARCHAR(255) NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(provider, provider_account_id)
+);
+
+
+-- ==========================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ==========================================
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.login_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.risk_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Users can read their own profile
+CREATE POLICY "Users can view own profile" 
+    ON public.users FOR SELECT 
+    USING (auth.uid() = id);
+
+-- Users can update their own profile
+CREATE POLICY "Users can update own profile" 
+    ON public.users FOR UPDATE 
+    USING (auth.uid() = id);
+
+-- Devices: users can view and manage their own devices
+CREATE POLICY "Users can view own devices" 
+    ON public.devices FOR SELECT 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own devices" 
+    ON public.devices FOR ALL 
+    USING (auth.uid() = user_id);
+
+-- Sessions: users can view and delete their own sessions
+CREATE POLICY "Users can view own sessions" 
+    ON public.sessions FOR SELECT 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own sessions" 
+    ON public.sessions FOR DELETE 
+    USING (auth.uid() = user_id);
+
+-- Read-only for personal history, alerts, notifications
+CREATE POLICY "Users can view own login history" ON public.login_history FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own risk scores" ON public.risk_scores FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own alerts" ON public.alerts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own alerts" ON public.alerts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+
+-- Functions & Triggers
+
+-- Auto-create user profile on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email)
+  VALUES (new.id, new.email);
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyber-dark: #050505;
+  --color-cyber-darker: #020202;
+  --color-cyber-blue: #00f0ff;
+  --color-cyber-purple: #8a2be2;
+  --color-cyber-red: #ff003c;
+  --color-cyber-green: #00ff66;
+  
+  --font-family-cyber: 'Inter', 'Orbitron', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-cyber-dark)] text-white font-cyber antialiased min-h-screen overflow-x-hidden;
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.03), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(138, 43, 226, 0.03), transparent 25%);
+  }
+
+  ::selection {
+    @apply bg-[var(--color-cyber-blue)] text-black;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_15px_rgba(0,240,255,0.05)];
+  }
+  
+  .glass-input {
+    @apply bg-black/50 border border-white/20 text-white rounded-lg focus:ring-2 focus:ring-[var(--color-cyber-blue)] focus:border-transparent transition-all outline-none;
+  }
+
+  .btn-cyber {
+    @apply relative overflow-hidden bg-gradient-to-r from-[var(--color-cyber-blue)] to-[var(--color-cyber-purple)] text-white font-semibold rounded-lg shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:shadow-[0_0_30px_rgba(0,240,255,0.5)] transition-all duration-300 transform hover:-translate-y-0.5;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  }
+}

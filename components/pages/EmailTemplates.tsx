@@ -1,0 +1,68 @@
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
+import { Sidebar } from '@/components/components/Sidebar';
+import { Navbar } from '@/components/components/Navbar';
+import { Button } from '@/components/components/Button';
+import { Mail, Plus, Edit, Trash2, Eye } from 'lucide-react';
+
+const templates = [
+  { id: '1', name: 'Security Alert', subject: 'Security Alert: {{threat_type}}', category: 'Alerts', lastModified: '2026-04-28', usage: 245 },
+  { id: '2', name: 'Password Reset', subject: 'Reset Your Password', category: 'Authentication', lastModified: '2026-04-25', usage: 892 },
+  { id: '3', name: 'New Device Login', subject: 'New Device Detected', category: 'Notifications', lastModified: '2026-04-20', usage: 567 },
+  { id: '4', name: 'Weekly Report', subject: 'Weekly Security Summary', category: 'Reports', lastModified: '2026-04-15', usage: 48 },
+];
+
+export function EmailTemplates() {
+  return (
+    <div className="min-h-screen">
+      <Sidebar />
+      <div className="ml-64">
+        <Navbar />
+        <main className="pt-20 p-6">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold mb-2">Email Templates</h1>
+              <p className="text-muted-foreground">Manage email notification templates</p>
+            </div>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Template
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5" />
+                Email Templates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {templates.map((template) => (
+                  <div key={template.id} className="p-4 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-1">{template.name}</h4>
+                        <p className="text-sm text-muted-foreground mb-2">{template.subject}</p>
+                        <div className="flex gap-4 text-xs text-muted-foreground">
+                          <span>Category: {template.category}</span>
+                          <span>Last Modified: {template.lastModified}</span>
+                          <span>Used {template.usage} times</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm"><Eye className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="sm"><Edit className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="sm"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </div>
+  );
+}

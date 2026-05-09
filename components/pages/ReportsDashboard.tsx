@@ -1,0 +1,65 @@
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
+import { Sidebar } from '@/components/components/Sidebar';
+import { Navbar } from '@/components/components/Navbar';
+import { Button } from '@/components/components/Button';
+import { FileText, Plus, Calendar, TrendingUp } from 'lucide-react';
+
+const reports = [
+  { name: 'Security Summary', type: 'Executive', lastGenerated: '2026-04-30', schedule: 'Weekly' },
+  { name: 'Compliance Status', type: 'Compliance', lastGenerated: '2026-04-29', schedule: 'Monthly' },
+  { name: 'Vulnerability Report', type: 'Technical', lastGenerated: '2026-04-30', schedule: 'Daily' },
+  { name: 'Incident Analysis', type: 'Security', lastGenerated: '2026-04-28', schedule: 'As Needed' },
+];
+
+export function ReportsDashboard() {
+  return (
+    <div className="min-h-screen">
+      <Sidebar />
+      <div className="ml-64">
+        <Navbar />
+        <main className="pt-20 p-6">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold mb-2">Reports Dashboard</h1>
+              <p className="text-muted-foreground">Overview of generated reports</p>
+            </div>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Report
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Available Reports
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {reports.map((report, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-input-background/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium">{report.name}</h4>
+                          <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary">{report.type}</span>
+                        </div>
+                        <div className="flex gap-4 text-sm text-muted-foreground">
+                          <span>Last: {report.lastGenerated}</span>
+                          <span>Schedule: {report.schedule}</span>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">View Report</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </div>
+  );
+}

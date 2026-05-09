@@ -1,0 +1,69 @@
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
+import { Sidebar } from '@/components/components/Sidebar';
+import { Navbar } from '@/components/components/Navbar';
+import { Button } from '@/components/components/Button';
+import { CreditCard, Download, Calendar } from 'lucide-react';
+
+const invoices = [
+  { id: 'INV-2024-04', date: '2026-04-01', amount: '$2,499.00', status: 'Paid' },
+  { id: 'INV-2024-03', date: '2026-03-01', amount: '$2,499.00', status: 'Paid' },
+  { id: 'INV-2024-02', date: '2026-02-01', amount: '$2,499.00', status: 'Paid' },
+];
+
+export function Billing() {
+  return (
+    <div className="min-h-screen">
+      <Sidebar />
+      <div className="ml-64">
+        <Navbar />
+        <main className="pt-20 p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-semibold mb-2">Billing & Invoices</h1>
+            <p className="text-muted-foreground">Manage billing information and view invoices</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Invoices</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {invoices.map((invoice) => (
+                    <div key={invoice.id} className="flex items-center justify-between p-4 rounded-lg bg-input-background/30">
+                      <div>
+                        <h4 className="font-medium mb-1">{invoice.id}</h4>
+                        <p className="text-sm text-muted-foreground">{invoice.date}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold">{invoice.amount}</span>
+                        <span className="text-xs px-2 py-1 rounded bg-success/20 text-success">{invoice.status}</span>
+                        <Button variant="outline" size="sm"><Download className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 rounded-lg bg-input-background/30 mb-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <CreditCard className="w-5 h-5" />
+                    <span className="font-medium">•••• •••• •••• 4242</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Expires 12/2027</p>
+                </div>
+                <Button variant="outline" className="w-full">Update Payment Method</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}

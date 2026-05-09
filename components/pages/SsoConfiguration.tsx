@@ -1,0 +1,66 @@
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
+import { Sidebar } from '@/components/components/Sidebar';
+import { Navbar } from '@/components/components/Navbar';
+import { Button } from '@/components/components/Button';
+import { Key, CheckCircle, Settings } from 'lucide-react';
+
+const ssoProviders = [
+  { name: 'Google Workspace', status: 'Connected', users: 187, protocol: 'SAML 2.0' },
+  { name: 'Microsoft Azure AD', status: 'Connected', users: 92, protocol: 'OIDC' },
+  { name: 'Okta', status: 'Available', users: 0, protocol: 'SAML 2.0' },
+  { name: 'Auth0', status: 'Available', users: 0, protocol: 'OIDC' },
+];
+
+export function SsoConfiguration() {
+  return (
+    <div className="min-h-screen">
+      <Sidebar />
+      <div className="ml-64">
+        <Navbar />
+        <main className="pt-20 p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-semibold mb-2">SSO Configuration</h1>
+            <p className="text-muted-foreground">Configure Single Sign-On providers</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                SSO Providers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {ssoProviders.map((provider, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-input-background/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium">{provider.name}</h4>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            provider.status === 'Connected' ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {provider.status}
+                          </span>
+                        </div>
+                        <div className="flex gap-4 text-sm text-muted-foreground">
+                          <span>Protocol: {provider.protocol}</span>
+                          {provider.users > 0 && <span>{provider.users} users</span>}
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <Settings className="w-4 h-4 mr-2" />
+                        {provider.status === 'Connected' ? 'Configure' : 'Connect'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </div>
+  );
+}
