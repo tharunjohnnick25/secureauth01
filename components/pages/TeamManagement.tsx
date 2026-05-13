@@ -26,7 +26,7 @@ export function TeamManagement() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user => 
+    return (users as any[]).filter((user: any) => 
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -35,7 +35,7 @@ export function TeamManagement() {
   const handleExport = () => {
     const csv = [
       ['ID', 'Name', 'Email', 'Role', 'Created At'],
-      ...filteredUsers.map(u => [u.id, u.full_name, u.email, u.role, u.created_at])
+      ...(filteredUsers as any[]).map((u: any) => [u.id, u.full_name, u.email, u.role, u.created_at])
     ].map(e => e.join(',')).join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -82,12 +82,12 @@ export function TeamManagement() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="sm">
                   <Filter className="w-4 h-4" />
                 </Button>
                 <div className="h-8 w-[1px] bg-border mx-2" />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  Showing {filteredUsers.length} of {users.length} users
+                  Showing {(filteredUsers as any[]).length} of {(users as any[]).length} users
                 </span>
               </div>
             </CardContent>
@@ -107,7 +107,7 @@ export function TeamManagement() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filteredUsers.map((user) => (
+                    {(filteredUsers as any[]).map((user: any) => (
                       <tr key={user.id} className="hover:bg-primary/5 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
@@ -144,13 +144,13 @@ export function TeamManagement() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Button variant="ghost" size="icon" className="hover:bg-muted">
+                          <Button variant="ghost" size="sm" className="hover:bg-muted">
                             <ChevronRight className="w-4 h-4" />
                           </Button>
                         </td>
                       </tr>
                     ))}
-                    {filteredUsers.length === 0 && !loading && (
+                    {(filteredUsers as any[]).length === 0 && !loading && (
                       <tr>
                         <td colSpan={5} className="px-6 py-20 text-center">
                           <div className="flex flex-col items-center gap-3">

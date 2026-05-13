@@ -13,7 +13,7 @@ export function useTypingBehavior() {
   const [lastKeyDown, setLastKeyDown] = useState<number | null>(null);
   const [lastKeyUp, setLastKeyUp] = useState<number | null>(null);
 
-  const handleKeyDown = useCallback(() => {
+  const handleKeyDown = useCallback((e?: any) => {
     const now = Date.now();
     if (lastKeyUp) {
       setMetrics((prev) => ({
@@ -24,7 +24,7 @@ export function useTypingBehavior() {
     setLastKeyDown(now);
   }, [lastKeyUp]);
 
-  const handleKeyUp = useCallback(() => {
+  const handleKeyUp = useCallback((e?: any) => {
     const now = Date.now();
     if (lastKeyDown) {
       setMetrics((prev) => ({

@@ -10,7 +10,7 @@ const TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes
 export function SessionTimeout() {
   const { isAuthenticated, logout } = useAuthStore();
   const router = useRouter();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<any>(null);
 
   const resetTimeout = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);

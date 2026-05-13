@@ -28,15 +28,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (verification.verified && verification.registrationInfo) {
-      const { credentialPublicKey, credentialID, counter } = verification.registrationInfo;
+      const { credential } = verification.registrationInfo;
 
       // 3. Save credential to Supabase
       await supabase.from('user_credentials').insert({
         user_id: user?.id,
-        credential_id: Buffer.from(credentialID).toString('base64'),
-        public_key: Buffer.from(credentialPublicKey).toString('base64'),
-        counter,
-        transports: attestationResponse.response.transports,
+        credential_id: credential.id,
+        public_key: Buffer.from(credential.publicKey).toString('base64'),
+        counter: credential.counter,
+        transports: credential.transports || [],
       });
 
       return NextResponse.json({ success: true });

@@ -34,10 +34,11 @@ export async function POST(req: NextRequest) {
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialID: credential.credential_id,
-        credentialPublicKey: Buffer.from(credential.public_key, 'base64'),
+      credential: {
+        id: credential.credential_id,
+        publicKey: Buffer.from(credential.public_key, 'base64'),
         counter: credential.counter,
+        transports: [],
       },
     });
 

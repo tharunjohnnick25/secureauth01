@@ -11,7 +11,7 @@ export default function MfaForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { riskLevel, setRequiresMfa } = useAuthStore();
+  const { riskLevel, clearBiometricRequirement } = useAuthStore();
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ export default function MfaForm() {
 
       if (!res.ok) throw new Error('Invalid verification code');
 
-      setRequiresMfa(false);
+      clearBiometricRequirement();
       // Wait for auth session to establish then push
       router.push('/dashboard');
     } catch (err: any) {

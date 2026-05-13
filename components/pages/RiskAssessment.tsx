@@ -12,17 +12,17 @@ export function RiskAssessment() {
   const { data: logins } = useRealtimeData('login_history');
   
   const riskMetrics = useMemo(() => {
-    const total = logins.length || 1;
-    const avgScore = logins.reduce((acc, l) => acc + (l.risk_score || 0), 0) / total;
-    const highRisk = logins.filter(l => (l.risk_score || 0) > 70).length;
-    const mediumRisk = logins.filter(l => (l.risk_score || 0) > 30 && (l.risk_score || 0) <= 70).length;
+    const total = (logins as any[]).length || 1;
+    const avgScore = (logins as any[]).reduce((acc, l: any) => acc + (l.risk_score || 0), 0) / total;
+    const highRisk = (logins as any[]).filter((l: any) => (l.risk_score || 0) > 70).length;
+    const mediumRisk = (logins as any[]).filter((l: any) => (l.risk_score || 0) > 30 && (l.risk_score || 0) <= 70).length;
 
     // Data for radar chart
     const radarData = [
-      { subject: 'Geo Velocity', A: logins.filter(l => l.risk_score > 80 && l.type === 'geo').length * 10, fullMark: 100 },
-      { subject: 'Device Trust', A: logins.filter(l => l.risk_score > 60 && l.type === 'device').length * 10, fullMark: 100 },
+      { subject: 'Geo Velocity', A: (logins as any[]).filter((l: any) => l.risk_score > 80 && l.type === 'geo').length * 10, fullMark: 100 },
+      { subject: 'Device Trust', A: (logins as any[]).filter((l: any) => l.risk_score > 60 && l.type === 'device').length * 10, fullMark: 100 },
       { subject: 'Typing Biometrics', A: 45, fullMark: 100 }, // Mocked for now as we don't store typing raw in history
-      { subject: 'Impossible Travel', A: logins.filter(l => l.risk_score === 100).length * 20, fullMark: 100 },
+      { subject: 'Impossible Travel', A: (logins as any[]).filter((l: any) => l.risk_score === 100).length * 20, fullMark: 100 },
       { subject: 'IP Reputation', A: 30, fullMark: 100 },
     ];
 

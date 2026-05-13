@@ -15,7 +15,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { setUser, setRequiresMfa } = useAuthStore();
+  const { setUser, setRequiresBiometric } = useAuthStore();
   
   const {
     register,
@@ -40,8 +40,8 @@ export default function LoginForm() {
         throw new Error(result.error || 'Login failed');
       }
 
-      if (result.requiresMfa) {
-        setRequiresMfa(true, result.riskLevel);
+      if (result.requiresMfa || result.requiresBiometric) {
+        setRequiresBiometric(true, result.riskLevel);
         router.push('/mfa-verify');
       } else {
         setUser(result.user);

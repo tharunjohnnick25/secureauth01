@@ -13,10 +13,10 @@ export function Analytics() {
   const { data: alerts } = useRealtimeData('alerts');
 
   const stats = useMemo(() => {
-    const total = logins.length || 1;
-    const success = logins.filter(l => l.status === 'success').length;
+    const total = (logins as any[]).length || 1;
+    const success = (logins as any[]).filter((l: any) => l.status === 'success').length;
     const rate = ((success / total) * 100).toFixed(1);
-    const failed = logins.filter(l => l.status !== 'success').length;
+    const failed = (logins as any[]).filter((l: any) => l.status !== 'success').length;
     
     return { total, success, rate, failed };
   }, [logins]);
@@ -27,7 +27,7 @@ export function Analytics() {
       logins: 0
     }));
 
-    logins.forEach(log => {
+    (logins as any[]).forEach((log: any) => {
       const hour = new Date(log.created_at).getHours();
       hours[hour].logins++;
     });
@@ -39,7 +39,7 @@ export function Analytics() {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const data = days.map(day => ({ day, success: 0, failed: 0, risky: 0 }));
 
-    logins.forEach(log => {
+    (logins as any[]).forEach((log: any) => {
       const dayIndex = new Date(log.created_at).getDay();
       const dayData = data[dayIndex];
       if (log.status === 'success') dayData.success++;
@@ -54,7 +54,7 @@ export function Analytics() {
     // 7 days * 24 hours = 168 cells
     // For simplicity, showing 7x7 intensity grid
     const grid = Array.from({ length: 49 }).fill(0) as number[];
-    logins.forEach(log => {
+    (logins as any[]).forEach((log: any) => {
       const date = new Date(log.created_at);
       const day = date.getDay();
       const hourBlock = Math.floor(date.getHours() / 3.5); // Normalize to 7 blocks
@@ -216,7 +216,7 @@ export function Analytics() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                   {alerts.map((alert) => (
+                   {(alerts as any[]).map((alert: any) => (
                      <div key={alert.id} className="p-3 rounded-lg bg-input-background/30 border-l-2 transition-all hover:bg-input-background/50" 
                           style={{ borderColor: alert.severity === 'critical' ? '#ef4444' : alert.severity === 'high' ? '#f59e0b' : '#6366f1' }}>
                         <div className="flex items-center justify-between mb-1">

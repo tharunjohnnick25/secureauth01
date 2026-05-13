@@ -66,7 +66,7 @@ export function SessionManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Sessions</p>
-                  <h3 className="text-2xl font-semibold">{sessions.filter(s => s.is_active).length}</h3>
+                  <h3 className="text-2xl font-semibold">{(sessions as any[]).filter((s: any) => s.is_active).length}</h3>
                 </div>
               </CardContent>
             </Card>
@@ -78,7 +78,7 @@ export function SessionManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Secure Devices</p>
-                  <h3 className="text-2xl font-semibold">{new Set(sessions.map(s => s.device_id)).size}</h3>
+                  <h3 className="text-2xl font-semibold">{new Set((sessions as any[]).map((s: any) => s.device_id)).size}</h3>
                 </div>
               </CardContent>
             </Card>
@@ -90,7 +90,7 @@ export function SessionManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Geographic Spread</p>
-                  <h3 className="text-2xl font-semibold">{new Set(sessions.map(s => s.ip_address)).size} IPs</h3>
+                  <h3 className="text-2xl font-semibold">{new Set((sessions as any[]).map((s: any) => s.ip_address)).size} IPs</h3>
                 </div>
               </CardContent>
             </Card>
@@ -113,7 +113,7 @@ export function SessionManagement() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {sessions.map((session) => (
+                    {(sessions as any[]).map((session: any) => (
                       <tr key={session.id} className="group hover:bg-primary/5 transition-colors">
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ export function SessionManagement() {
                         </td>
                       </tr>
                     ))}
-                    {sessions.length === 0 && !loading && (
+                    {(sessions as any[]).length === 0 && !loading && (
                       <tr>
                         <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                           No active sessions found.

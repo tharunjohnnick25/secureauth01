@@ -96,7 +96,7 @@ export function MultiStepLogin() {
   useEffect(() => {
     if (step === 'granted') {
       setTimeout(() => {
-        setUser({ id: '1', email, firstName: 'Security', lastName: 'Admin' });
+        setUser({ id: '1', email, role: 'admin', first_name: 'Security', last_name: 'Admin' });
         router.push('/dashboard');
       }, 2000);
     }

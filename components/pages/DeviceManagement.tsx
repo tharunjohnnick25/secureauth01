@@ -18,7 +18,9 @@ import {
   ChevronRight,
   Shield,
   Search,
-  Settings
+  Settings,
+  Lock,
+  Activity
 } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';

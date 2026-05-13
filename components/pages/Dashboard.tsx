@@ -26,13 +26,13 @@ export function Dashboard() {
 
   // Calculate Stats
   const stats = useMemo(() => {
-    const successCount = allLogins.filter(l => l.status === 'success').length;
-    const totalCount = allLogins.length;
-    const activeDevices = devices.length;
-    const activeAlerts = alerts.filter(a => !a.is_read).length;
+    const successCount = (allLogins as any[]).filter((l: any) => l.status === 'success').length;
+    const totalCount = (allLogins as any[]).length;
+    const activeDevices = (devices as any[]).length;
+    const activeAlerts = (alerts as any[]).filter((a: any) => !a.is_read).length;
     
     // Risk Score based on recent alerts
-    const highRiskAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').length;
+    const highRiskAlerts = (alerts as any[]).filter((a: any) => a.severity === 'critical' || a.severity === 'high').length;
     let riskLevel = 'Low';
     let riskColor = 'text-success';
     if (highRiskAlerts > 5) {
@@ -55,7 +55,7 @@ export function Dashboard() {
       return { day: days[d.getDay()], success: 0, failed: 0 };
     });
 
-    allLogins.forEach(log => {
+    (allLogins as any[]).forEach((log: any) => {
       const logDate = new Date(log.created_at);
       const dayName = days[logDate.getDay()];
       const dayData = last7Days.find(d => d.day === dayName);
@@ -69,9 +69,9 @@ export function Dashboard() {
   }, [allLogins]);
 
   const riskDistribution = useMemo(() => {
-    const low = allLogins.filter(l => (l.risk_score || 0) < 30).length;
-    const medium = allLogins.filter(l => (l.risk_score || 0) >= 30 && (l.risk_score || 0) < 70).length;
-    const high = allLogins.filter(l => (l.risk_score || 0) >= 70).length;
+    const low = (allLogins as any[]).filter((l: any) => (l.risk_score || 0) < 30).length;
+    const medium = (allLogins as any[]).filter((l: any) => (l.risk_score || 0) >= 30 && (l.risk_score || 0) < 70).length;
+    const high = (allLogins as any[]).filter((l: any) => (l.risk_score || 0) >= 70).length;
 
     return [
       { name: 'Low Risk', value: low, color: '#10b981' },
@@ -259,7 +259,7 @@ export function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {logins.map((log) => (
+                    {(logins as any[]).map((log: any) => (
                       <tr key={log.id} className="hover:bg-primary/5 transition-colors group">
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">

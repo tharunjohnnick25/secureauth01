@@ -1,7 +1,7 @@
-import { createClient } from './supabase/server';
+import { createServerSupabaseClient } from './supabase/server';
 
 export async function getDashboardStats() {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
 
   const { count: totalLogins } = await supabase
     .from('login_history')
@@ -27,7 +27,7 @@ export async function getDashboardStats() {
 }
 
 export async function getLoginTrends() {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   
   const { data, error } = await supabase
     .from('login_history')

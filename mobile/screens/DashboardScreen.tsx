@@ -12,7 +12,12 @@ import { supabase } from '../lib/supabase';
 import { Shield, Smartphone, Bell, LogOut, Activity, CheckCircle, XCircle } from 'lucide-react-native';
 
 export default function DashboardScreen() {
-  const [pendingRequest, setPendingRequest] = useState({
+  const [pendingRequest, setPendingRequest] = useState<{
+    id: string;
+    service: string;
+    location: string;
+    device: string;
+  } | null>({
     id: 'REQ-123',
     service: 'Admin Console Login',
     location: 'New York, US',

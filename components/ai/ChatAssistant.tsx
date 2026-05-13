@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Cpu
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'assistant';
