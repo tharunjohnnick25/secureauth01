@@ -1,223 +1,298 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
-import {
-  Shield,
-  AlertTriangle,
-  TrendingUp,
-  Globe,
-  Target,
-  Activity,
-  Eye,
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  ShieldAlert, 
+  ShieldCheck, 
+  Activity, 
+  Globe, 
+  Target, 
+  AlertTriangle, 
+  Zap, 
+  Skull, 
+  Radar, 
+  Crosshair, 
+  Shield, 
+  Lock,
   Search,
-  Download,
-  Filter,
+  MapPin,
+  Clock,
+  ChevronRight,
+  TrendingUp,
+  Cpu
 } from 'lucide-react';
+import { 
+  AreaChart, Area, 
+  BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+  ScatterChart, Scatter, ZAxis
+} from 'recharts';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 
-const threatData = [
-  { id: 'THR-2024-001', type: 'Malware', severity: 'critical', source: 'Dark Web', target: 'Financial Sector', status: 'Active', date: '2026-04-30' },
-  { id: 'THR-2024-002', type: 'Phishing', severity: 'high', source: 'Email Campaign', target: 'Healthcare', status: 'Monitoring', date: '2026-04-29' },
-  { id: 'THR-2024-003', type: 'DDoS', severity: 'medium', source: 'Botnet', target: 'E-commerce', status: 'Mitigated', date: '2026-04-28' },
-  { id: 'THR-2024-004', type: 'Ransomware', severity: 'critical', source: 'APT Group', target: 'Government', status: 'Active', date: '2026-04-27' },
-  { id: 'THR-2024-005', type: 'Data Breach', severity: 'high', source: 'Insider Threat', target: 'Technology', status: 'Investigating', date: '2026-04-26' },
+// Mock data for threat intelligence
+const attackData = [
+  { time: '00:00', bruteForce: 45, stuffing: 20, vpn: 10 },
+  { time: '04:00', bruteForce: 30, stuffing: 15, vpn: 5 },
+  { time: '08:00', bruteForce: 85, stuffing: 40, vpn: 25 },
+  { time: '12:00', bruteForce: 120, stuffing: 65, vpn: 45 },
+  { time: '16:00', bruteForce: 95, stuffing: 50, vpn: 35 },
+  { time: '20:00', bruteForce: 60, stuffing: 30, vpn: 15 },
+  { time: '23:59', bruteForce: 40, stuffing: 25, vpn: 10 },
 ];
 
-const threatStats = [
-  { label: 'Active Threats', value: '247', change: '+12%', trend: 'up', color: 'destructive' },
-  { label: 'Mitigated Today', value: '89', change: '+8%', trend: 'up', color: 'success' },
-  { label: 'Under Investigation', value: '34', change: '-5%', trend: 'down', color: 'warning' },
-  { label: 'Global Coverage', value: '156', change: '+3%', trend: 'up', color: 'primary' },
-];
-
-const threatSources = [
-  { name: 'Dark Web Forums', threats: 89, percentage: 36 },
-  { name: 'APT Groups', threats: 54, percentage: 22 },
-  { name: 'Botnets', threats: 42, percentage: 17 },
-  { name: 'Insider Threats', threats: 35, percentage: 14 },
-  { name: 'Other', threats: 27, percentage: 11 },
+const vectorDistribution = [
+  { name: 'Brute Force', value: 40, color: '#ef4444' },
+  { name: 'Credential Stuffing', value: 30, color: '#f59e0b' },
+  { name: 'VPN/Proxy', value: 20, color: '#3b82f6' },
+  { name: 'Impossible Travel', value: 10, color: '#8a2be2' },
 ];
 
 export function ThreatIntelligence() {
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-6">
-          <div className="mb-6 flex items-center justify-between">
+        
+        <main className="pt-24 p-4 sm:p-6 lg:p-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-10">
             <div>
-              <h1 className="text-3xl font-semibold mb-2">Threat Intelligence</h1>
-              <p className="text-muted-foreground">
-                Real-time threat monitoring and analysis
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center border border-red-500/20">
+                  <Target className="text-red-400 w-6 h-6" />
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight">Threat Intelligence Center</h1>
+              </div>
+              <p className="text-gray-400">Real-time global attack monitoring & AI predictive analytics</p>
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-              </Button>
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
+
+            <div className="flex items-center gap-4">
+              <div className="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
+                 <span className="text-xs font-bold text-red-400 uppercase tracking-widest">Global Threat Level: High</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {threatStats.map((stat, index) => (
-              <Card key={index}>
-                <CardContent className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-lg bg-${stat.color}/20 flex items-center justify-center`}>
-                    <Shield className={`w-6 h-6 text-${stat.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <h3 className="text-2xl font-semibold">{stat.value}</h3>
-                    <p className={`text-xs flex items-center gap-1 mt-1 ${stat.trend === 'up' ? 'text-destructive' : 'text-success'}`}>
-                      <TrendingUp className="w-3 h-3" />
-                      {stat.change}
-                    </p>
-                  </div>
-                </CardContent>
+          {/* Core Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[
+              { label: 'Attacks Blocked', value: '14,209', icon: ShieldCheck, color: 'text-green-400', bg: 'bg-green-500/10' },
+              { label: 'Active Threats', value: '42', icon: Skull, color: 'text-red-400', bg: 'bg-red-500/10' },
+              { label: 'Avg Risk Score', value: '72%', icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+              { label: 'VPN Logins', value: '156', icon: Globe, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+            ].map((stat, i) => (
+              <Card key={i} className="glass-panel p-6">
+                <div className="flex justify-between items-start mb-4">
+                   <div className={`p-2 ${stat.bg} rounded-lg`}>
+                      <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                   </div>
+                   <TrendingUp className="w-4 h-4 text-gray-600" />
+                </div>
+                <div className="text-2xl font-bold text-white">{stat.value}</div>
+                <div className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">{stat.label}</div>
               </Card>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  Active Threats
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {threatData.map((threat) => (
-                    <div
-                      key={threat.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          threat.severity === 'critical' ? 'bg-destructive/20' :
-                          threat.severity === 'high' ? 'bg-warning/20' : 'bg-primary/20'
-                        }`}>
-                          <Target className={`w-5 h-5 ${
-                            threat.severity === 'critical' ? 'text-destructive' :
-                            threat.severity === 'high' ? 'text-warning' : 'text-primary'
-                          }`} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{threat.id}</h4>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              threat.severity === 'critical' ? 'bg-destructive/20 text-destructive' :
-                              threat.severity === 'high' ? 'bg-warning/20 text-warning' : 'bg-primary/20 text-primary'
-                            }`}>
-                              {threat.severity}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{threat.type} - {threat.source}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{threat.target}</p>
-                        <p className="text-xs text-muted-foreground">{threat.date}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* Live Attack Visualization */}
+            <Card className="lg:col-span-2 glass-panel p-8 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-8">
+                  <Radar className="w-32 h-32 text-red-500/5 animate-spin-slow" />
+               </div>
+               
+               <div className="flex items-center justify-between mb-8 relative z-10">
+                  <div>
+                    <h3 className="text-xl font-bold">Attack Propagation Stream</h3>
+                    <p className="text-sm text-gray-400 font-medium">Real-time correlated security events</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 text-[10px] font-bold text-gray-400 uppercase">24h History</div>
+                  </div>
+               </div>
+
+               <div className="h-[350px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={attackData}>
+                      <defs>
+                        <linearGradient id="colorBrute" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                      <XAxis dataKey="time" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                      <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                        itemStyle={{ fontSize: '12px' }}
+                      />
+                      <Area type="monotone" dataKey="bruteForce" stroke="#ef4444" strokeWidth={3} fill="url(#colorBrute)" />
+                      <Area type="monotone" dataKey="stuffing" stroke="#f59e0b" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+               </div>
+
+               <div className="mt-8 flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-xs text-gray-400">Brute Force</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full border border-yellow-500 border-dashed"></div>
+                    <span className="text-xs text-gray-400">Credential Stuffing</span>
+                  </div>
+               </div>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="w-5 h-5" />
-                  Threat Sources
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {threatSources.map((source, index) => (
-                    <div key={index}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">{source.name}</span>
-                        <span className="text-sm font-medium">{source.threats}</span>
-                      </div>
-                      <div className="w-full bg-input-background rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full"
-                          style={{ width: `${source.percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+            {/* AI Threat Predictions */}
+            <Card className="glass-panel p-8 flex flex-col">
+               <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                    <Cpu className="text-purple-400 w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">AI Forecasting</h3>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">Predictive Defense</p>
+                  </div>
+               </div>
+
+               <div className="space-y-6 flex-1">
+                  <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl relative overflow-hidden group">
+                     <div className="flex justify-between items-center mb-3">
+                        <span className="text-xs font-bold text-purple-300">Botnet Activity Spike</span>
+                        <span className="text-[10px] font-black text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded uppercase">84% PROB</span>
+                     </div>
+                     <p className="text-xs text-gray-400 leading-relaxed">
+                        Predicted 15% increase in automated login attempts over the next 6 hours targeting North American endpoints.
+                      </p>
+                      <motion.div 
+                        animate={{ x: ['-100%', '100%'] }} 
+                        transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                        className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-purple-500 to-transparent"
+                      />
+                  </div>
+
+                  <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+                     <div className="flex justify-between items-center mb-3">
+                        <span className="text-xs font-bold text-blue-300">Pattern Recognition</span>
+                        <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded uppercase">Low Risk</span>
+                     </div>
+                     <p className="text-xs text-gray-400 leading-relaxed">
+                        Current session entropy is within healthy parameters. No immediate lateral movement detected.
+                      </p>
+                  </div>
+               </div>
+
+               <button className="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-bold text-gray-500 uppercase tracking-widest transition-all">
+                  Generate Full Threat Report
+               </button>
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Threat Intelligence Feed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search threat intelligence..."
-                    className="w-full pl-10 pr-4 py-2 bg-input-background rounded-lg border border-border focus:outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="p-4 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <Eye className="w-5 h-5 text-primary mt-0.5" />
-                      <div>
-                        <h4 className="font-medium mb-1">New Malware Variant Detected</h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          A new variant of the TrickBot malware has been identified targeting financial institutions in North America.
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>Source: CISA</span>
-                          <span>•</span>
-                          <span>2 hours ago</span>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Security Incident Logs */}
+            <Card className="lg:col-span-3 glass-panel p-8">
+               <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-bold flex items-center gap-3">
+                    <Activity className="w-5 h-5 text-red-400" /> Security Incident Stream
+                  </h3>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                    <input type="text" placeholder="Filter incidents..." className="pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs outline-none focus:border-red-500/30 w-48" />
+                  </div>
+               </div>
+
+               <div className="space-y-3">
+                  {[
+                    { type: 'IMPOSSIBLE_TRAVEL', user: 'adm_201', risk: 'CRITICAL', origin: 'London, UK', time: '2m ago' },
+                    { type: 'CREDENTIAL_STUFFING', user: 'unknown', risk: 'HIGH', origin: 'Mumbai, IN', time: '8m ago' },
+                    { type: 'BRUTE_FORCE_BLOCK', user: 'usr_823', risk: 'HIGH', origin: 'Chennai, IN', time: '14m ago' },
+                    { type: 'VPN_DETECTION', user: 'usr_110', risk: 'MEDIUM', origin: 'Amsterdam, NL', time: '22m ago' },
+                    { type: 'PROXY_ANOMALY', user: 'adm_201', risk: 'HIGH', origin: 'Unknown', time: '30m ago' },
+                  ].map((incident, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-all ${
+                          incident.risk === 'CRITICAL' ? 'bg-red-500/20 border-red-500/20 text-red-400' : 
+                          incident.risk === 'HIGH' ? 'bg-orange-500/20 border-orange-500/20 text-orange-400' :
+                          'bg-blue-500/20 border-blue-500/20 text-blue-400'
+                        }`}>
+                          <AlertTriangle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                             <span className="text-sm font-bold text-white">{incident.type}</span>
+                             <span className="text-[10px] text-gray-500 font-mono">{incident.user}</span>
+                          </div>
+                          <div className="text-[10px] text-gray-500 flex items-center gap-1.5 mt-1">
+                             <MapPin className="w-3 h-3" /> {incident.origin} • <Clock className="w-3 h-3" /> {incident.time}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <Eye className="w-5 h-5 text-warning mt-0.5" />
-                      <div>
-                        <h4 className="font-medium mb-1">Phishing Campaign Alert</h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Large-scale phishing campaign impersonating major cloud providers detected across multiple regions.
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>Source: Internal</span>
-                          <span>•</span>
-                          <span>5 hours ago</span>
-                        </div>
+                      <div className="text-right">
+                         <div className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                           incident.risk === 'CRITICAL' ? 'bg-red-500/20 text-red-400' : 
+                           incident.risk === 'HIGH' ? 'bg-orange-500/20 text-orange-400' :
+                           'bg-blue-500/20 text-blue-400'
+                         }`}>
+                           {incident.risk}
+                         </div>
+                         <ChevronRight className="w-4 h-4 text-gray-700 mt-2 ml-auto group-hover:text-white transition-colors" />
                       </div>
+                    </motion.div>
+                  ))}
+               </div>
+            </Card>
+
+            {/* Vector Distribution */}
+            <Card className="glass-panel p-8">
+               <h3 className="text-lg font-bold mb-8">Attack Vectors</h3>
+               <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={vectorDistribution}
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {vectorDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+               </div>
+               <div className="space-y-4 mt-8">
+                  {vectorDistribution.map((v) => (
+                    <div key={v.name} className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: v.color }}></div>
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{v.name}</span>
+                       </div>
+                       <span className="text-xs font-bold text-white">{v.value}%</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+               </div>
+            </Card>
+          </div>
         </main>
       </div>
     </div>

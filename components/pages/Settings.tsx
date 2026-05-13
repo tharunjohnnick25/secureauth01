@@ -1,8 +1,10 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
-import { Input } from '@/components/components/Input';
+'use client';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
 import { Shield, Bell, Lock, User } from 'lucide-react';
 
 export function Settings() {

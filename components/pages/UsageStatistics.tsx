@@ -1,6 +1,8 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
+'use client';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
 import { Activity, TrendingUp, Users, Database } from 'lucide-react';
 
 const stats = [

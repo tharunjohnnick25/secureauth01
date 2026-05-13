@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     role_id UUID REFERENCES public.roles(id),
     is_mfa_enabled BOOLEAN DEFAULT FALSE,
     mfa_secret TEXT,
+    push_token TEXT,
+    biometric_enabled BOOLEAN DEFAULT FALSE,
     status VARCHAR(20) DEFAULT 'active', -- active, locked, suspended
     failed_login_attempts INT DEFAULT 0,
     lockout_until TIMESTAMP WITH TIME ZONE,
@@ -54,6 +56,7 @@ CREATE TABLE IF NOT EXISTS public.devices (
     device_name VARCHAR(100),
     browser VARCHAR(100),
     os VARCHAR(100),
+    push_token TEXT,
     is_trusted BOOLEAN DEFAULT FALSE,
     last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -128,8 +131,16 @@ CREATE TABLE IF NOT EXISTS public.login_history (
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     device_id UUID REFERENCES public.devices(id) ON DELETE SET NULL,
     ip_address INET,
-    status VARCHAR(20), -- success, failed, mfa_required, locked
+    browser TEXT,
+    os TEXT,
+    status VARCHAR(20), -- success, failed, biometric_required, locked
     failure_reason TEXT,
+    risk_score NUMERIC,
+    risk_level VARCHAR(20),
+    latitude NUMERIC,
+    longitude NUMERIC,
+    city VARCHAR(100),
+    country VARCHAR(100),
     risk_score_id UUID REFERENCES public.risk_scores(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -243,3 +254,23 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+-- WebAuthn Credentials
+CREATE TABLE IF NOT EXISTS public.user_credentials (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    credential_id TEXT NOT NULL UNIQUE,
+    public_key TEXT NOT NULL,
+    counter INTEGER DEFAULT 0,
+    transports JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.user_credentials ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own credentials" 
+    ON public.user_credentials FOR SELECT 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own credentials" 
+    ON public.user_credentials FOR ALL 
+    USING (auth.uid() = user_id);

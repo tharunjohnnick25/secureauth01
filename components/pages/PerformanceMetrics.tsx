@@ -1,7 +1,9 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
+'use client';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
 import { Activity, TrendingUp, Clock, Zap, Download } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 

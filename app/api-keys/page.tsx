@@ -1,7 +1,10 @@
+import { ApiKeys } from '@/components/pages/ApiKeys';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-import ApiKeys from '@/components/pages/ApiKeys';
-
-export default function Page() {
-  return <ApiKeys />;
+export default function ApiKeysPage() {
+  return (
+    <AuthGuard>
+      <ApiKeys />
+    </AuthGuard>
+  );
 }
-      

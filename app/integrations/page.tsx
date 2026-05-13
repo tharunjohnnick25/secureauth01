@@ -1,5 +1,5 @@
 
-import Integrations from '@/components/pages/Integrations';
+import { Integrations } from '@/components/pages/Integrations';
 
 export default function Page() {
   return <Integrations />;

@@ -1,5 +1,5 @@
 
-import BackupRecovery from '@/components/pages/BackupRecovery';
+import { BackupRecovery } from '@/components/pages/BackupRecovery';
 
 export default function Page() {
   return <BackupRecovery />;

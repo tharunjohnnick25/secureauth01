@@ -1,24 +1,25 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
+'use client';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
 import {
   Puzzle,
   CheckCircle,
   Settings,
   ExternalLink,
-  Slack,
-  Github,
   Cloud,
   Database,
   Mail,
   MessageSquare,
+  Activity,
 } from 'lucide-react';
 
 const integrations = [
   {
     name: 'Slack',
-    icon: Slack,
+    icon: MessageSquare,
     description: 'Send security alerts and notifications to Slack channels',
     status: 'Connected',
     category: 'Communication',
@@ -27,7 +28,7 @@ const integrations = [
   },
   {
     name: 'GitHub',
-    icon: Github,
+    icon: Activity,
     description: 'Sync security events with GitHub Security Advisories',
     status: 'Connected',
     category: 'Development',

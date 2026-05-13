@@ -1,82 +1,142 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { calculateRiskScore } from '@/lib/risk';
 import { NextRequest, NextResponse } from 'next/server';
+import { calculateRiskScore, shouldTriggerBiometrics } from '@/lib/risk';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const { email, password, fingerprint, typingMetrics, location } = await req.json();
+
+    // 1. Domain Restriction
+    if (!email.endsWith('@gmail.com')) {
+      return NextResponse.json({ error: 'Only @gmail.com accounts are allowed' }, { status: 400 });
+    }
+
     const supabase = await createServerSupabaseClient();
 
-    // 1. Initial Auth Check
+    // 2. Auth with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (authError || !authData.user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    if (authError) {
+      return NextResponse.json({ error: authError.message }, { status: 401 });
     }
 
-    const userId = authData.user.id;
+    const user = authData.user;
 
-    // 2. Fetch User Profile
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
+    // 3. Update/Track Device
+    const { data: existingDevice } = await supabase
+      .from('devices')
       .select('*')
-      .eq('id', userId)
+      .eq('user_id', user.id)
+      .eq('device_id', fingerprint.hash)
       .single();
 
-    if (profileError || !userProfile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    if (!existingDevice) {
+      await supabase.from('devices').insert({
+        user_id: user.id,
+        device_id: fingerprint.hash,
+        browser: fingerprint.browser,
+        os: fingerprint.os,
+        is_trusted: false, // Default to false until verified/biometric auth
+      });
+    } else {
+      await supabase.from('devices').update({
+        last_active: new Date().toISOString()
+      }).eq('id', existingDevice.id);
     }
 
-    if (userProfile.status === 'locked') {
-      return NextResponse.json({ error: 'Account locked' }, { status: 403 });
-    }
+    // 4. Fetch User Profile & History for Risk Engine
+    const { data: profile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-    // 3. Risk Evaluation
-    const riskData = await calculateRiskScore(req, userId);
+    const { data: history } = await supabase
+      .from('login_history')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-    // 4. Record Login History
-    let status = 'success';
-    if (userProfile.is_mfa_enabled || riskData.riskLevel === 'high' || riskData.riskLevel === 'critical') {
-      status = 'mfa_required';
-    }
+    const { data: trustedDevices } = await supabase
+      .from('devices')
+      .select('device_id')
+      .eq('user_id', user.id)
+      .eq('is_trusted', true);
 
-    await supabase.from('login_history').insert({
-      user_id: userId,
-      ip_address: req.headers.get('x-forwarded-for') || '127.0.0.1',
-      status,
-      risk_score_id: riskData.riskRecordId
-    });
-
-    // 5. Check if MFA is required
-    if (status === 'mfa_required') {
-      // Don't fully log them in yet, we will clear the session and return a temporary token 
-      // or we just return mfa required and they hit the verify endpoint.
-      // With Supabase native MFA, we should check if they have AAL2.
-      
-      const { data: mfaData, error: mfaError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      
-      if (mfaData?.currentLevel === 'aal1') {
-         return NextResponse.json({
-          requiresMfa: true,
-          riskLevel: riskData.riskLevel,
-          message: 'MFA Verification Required'
-        });
-      }
-    }
-
-    // Reset failed attempts on success
-    await supabase.from('users').update({ failed_login_attempts: 0 }).eq('id', userId);
-
-    // 6. Return success
-    return NextResponse.json({
-      user: userProfile,
-      session: authData.session,
-      risk: riskData
-    });
+    // 5. Calculate Risk
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
     
+    const riskResult = calculateRiskScore({
+      ip,
+      location: location || { country: 'Unknown', city: 'Unknown', lat: 0, lng: 0 },
+      fingerprint,
+      typingMetrics,
+      history: {
+        lastIp: history?.ip_address,
+        lastLat: history?.latitude,
+        lastLng: history?.longitude,
+        lastLogin: history?.created_at,
+        trustedDevices: trustedDevices?.map(d => d.device_id) || [],
+      }
+    });
+
+    // 6. Track Login Attempt & Geo Location
+    const { data: historyRecord } = await supabase.from('login_history').insert({
+      user_id: user.id,
+      ip_address: ip,
+      browser: fingerprint.browser,
+      os: fingerprint.os,
+      risk_score: riskResult.score,
+      risk_level: riskResult.level,
+      latitude: location?.latitude,
+      longitude: location?.longitude,
+      city: location?.city,
+      country: location?.country,
+      status: shouldTriggerBiometrics(riskResult.level) ? 'biometric_required' : 'success'
+    }).select().single();
+
+    if (location && historyRecord) {
+      await supabase.from('geo_locations').insert({
+        user_id: user.id,
+        ip_address: ip,
+        city: location.city,
+        country: location.country,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        is_suspicious: riskResult.level === 'high' || riskResult.level === 'critical'
+      });
+    }
+
+    // 7. Check if Biometrics required
+    if (shouldTriggerBiometrics(riskResult.level)) {
+      return NextResponse.json({
+        requiresBiometric: true,
+        riskLevel: riskResult.level,
+        user: {
+          id: user.id,
+          email: user.email,
+        }
+      });
+    }
+
+    // 8. If low risk, trust the device automatically or after successful login
+    if (riskResult.level === 'low' && !existingDevice?.is_trusted) {
+        await supabase.from('devices').update({ is_trusted: true }).eq('user_id', user.id).eq('device_id', fingerprint.hash);
+    }
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: profile?.role || 'user',
+      },
+      session: authData.session,
+    });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

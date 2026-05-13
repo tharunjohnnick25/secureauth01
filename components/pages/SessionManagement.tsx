@@ -1,50 +1,46 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
-import {
-  Activity,
-  User,
-  Monitor,
-  Smartphone,
-  Tablet,
-  MapPin,
-  Clock,
+'use client';
+
+import { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
+import { 
+  Activity, 
+  Smartphone, 
+  Globe, 
+  Clock, 
+  Shield, 
   XCircle,
-  AlertTriangle,
-  Shield,
+  MoreHorizontal,
+  RefreshCw
 } from 'lucide-react';
-
-const activeSessions = [
-  { id: '1', user: 'sarah.chen@company.com', device: 'Chrome on macOS', deviceType: 'desktop', location: 'New York, US', ip: '192.168.1.105', started: '2 hours ago', lastActivity: '2 min ago', status: 'active' },
-  { id: '2', user: 'michael.r@company.com', device: 'Safari on iPhone 14', deviceType: 'mobile', location: 'London, UK', ip: '203.0.113.45', started: '5 hours ago', lastActivity: '15 min ago', status: 'active' },
-  { id: '3', user: 'emily.t@company.com', device: 'Firefox on Windows', deviceType: 'desktop', location: 'Tokyo, JP', ip: '198.51.100.89', started: '1 day ago', lastActivity: '1 hour ago', status: 'active' },
-  { id: '4', user: 'david.kim@company.com', device: 'Chrome on Android', deviceType: 'mobile', location: 'Singapore, SG', ip: '45.33.32.156', started: '3 hours ago', lastActivity: '30 min ago', status: 'active' },
-  { id: '5', user: 'lisa.a@company.com', device: 'Safari on iPad Pro', deviceType: 'tablet', location: 'São Paulo, BR', ip: '192.0.2.45', started: '6 hours ago', lastActivity: '5 min ago', status: 'active' },
-  { id: '6', user: 'unknown@suspicious.com', device: 'Unknown Browser', deviceType: 'unknown', location: 'Unknown', ip: '45.76.89.123', started: '10 min ago', lastActivity: '1 min ago', status: 'suspicious' },
-];
-
-const sessionStats = [
-  { label: 'Active Sessions', value: '287', icon: Activity, color: 'primary' },
-  { label: 'Desktop', value: '156', icon: Monitor, color: 'success' },
-  { label: 'Mobile', value: '98', icon: Smartphone, color: 'warning' },
-  { label: 'Suspicious', value: '3', icon: AlertTriangle, color: 'destructive' },
-];
-
-const recentTerminations = [
-  { user: 'john.doe@company.com', reason: 'User logout', device: 'Chrome on Windows', time: '15 min ago' },
-  { user: 'jane.smith@company.com', reason: 'Session timeout', device: 'Safari on macOS', time: '45 min ago' },
-  { user: 'unknown', reason: 'Security policy violation', device: 'Unknown', time: '2 hours ago' },
-];
-
-const sessionPolicies = [
-  { name: 'Session Timeout', value: '30 minutes', status: 'enabled' },
-  { name: 'Concurrent Sessions', value: '3 devices', status: 'enabled' },
-  { name: 'Idle Timeout', value: '15 minutes', status: 'enabled' },
-  { name: 'Device Trust', value: 'Required', status: 'enabled' },
-];
+import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
 
 export function SessionManagement() {
+  const { data: sessions, loading, refetch } = useRealtimeData('sessions', (q) => q.select('*').order('last_seen', { ascending: false }));
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  const handleRevoke = async (sessionId: string) => {
+    setRevoking(sessionId);
+    try {
+      const res = await fetch('/api/auth/session/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      });
+      if (!res.ok) throw new Error('Failed to revoke session');
+      toast.success('Session revoked successfully');
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setRevoking(null);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Sidebar />
@@ -54,174 +50,135 @@ export function SessionManagement() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold mb-2">Session Management</h1>
-              <p className="text-muted-foreground">
-                Monitor and control active user sessions
-              </p>
+              <p className="text-muted-foreground">Monitor and manage all active authentication sessions</p>
             </div>
-            <Button variant="outline">
-              <Shield className="w-4 h-4 mr-2" />
-              Session Policies
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {sessionStats.map((stat, index) => (
-              <Card key={index}>
-                <CardContent className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-lg bg-${stat.color}/20 flex items-center justify-center`}>
-                    <stat.icon className={`w-6 h-6 text-${stat.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <h3 className="text-2xl font-semibold">{stat.value}</h3>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <Card>
+              <CardContent className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Sessions</p>
+                  <h3 className="text-2xl font-semibold">{sessions.filter(s => s.is_active).length}</h3>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Secure Devices</p>
+                  <h3 className="text-2xl font-semibold">{new Set(sessions.map(s => s.device_id)).size}</h3>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
+                  <Globe className="w-6 h-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Geographic Spread</p>
+                  <h3 className="text-2xl font-semibold">{new Set(sessions.map(s => s.ip_address)).size} IPs</h3>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Active Sessions
-              </CardTitle>
+              <CardTitle>Active Authentication Contexts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {activeSessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className={`p-4 rounded-lg transition-colors ${
-                      session.status === 'suspicious'
-                        ? 'bg-destructive/10 border border-destructive/20'
-                        : 'bg-input-background/30 hover:bg-input-background/50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          session.deviceType === 'desktop' ? 'bg-primary/20' :
-                          session.deviceType === 'mobile' ? 'bg-warning/20' :
-                          session.deviceType === 'tablet' ? 'bg-success/20' :
-                          'bg-destructive/20'
-                        }`}>
-                          {session.deviceType === 'desktop' && <Monitor className="w-5 h-5 text-primary" />}
-                          {session.deviceType === 'mobile' && <Smartphone className="w-5 h-5 text-warning" />}
-                          {session.deviceType === 'tablet' && <Tablet className="w-5 h-5 text-success" />}
-                          {session.deviceType === 'unknown' && <AlertTriangle className="w-5 h-5 text-destructive" />}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium">{session.user}</span>
-                            {session.status === 'suspicious' && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-destructive/20 text-destructive">
-                                SUSPICIOUS
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">{session.device}</p>
-                          <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{session.location}</span>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                      <th className="px-4 py-3">Device / Browser</th>
+                      <th className="px-4 py-3">IP Address</th>
+                      <th className="px-4 py-3">Last Seen</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {sessions.map((session) => (
+                      <tr key={session.id} className="group hover:bg-primary/5 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-input-background flex items-center justify-center">
+                              <Smartphone className="w-5 h-5 text-primary" />
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-mono">{session.ip}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              <span>Started: {session.started}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Activity className="w-3 h-3" />
-                              <span>Active: {session.lastActivity}</span>
+                            <div>
+                              <p className="text-sm font-medium">{session.user_agent?.split(' ')[0] || 'Unknown Device'}</p>
+                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                {session.user_agent}
+                              </p>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button variant="outline" size="sm">
-                          Details
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <XCircle className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Showing 6 of 287 active sessions</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Previous</Button>
-                  <Button variant="outline" size="sm">Next</Button>
-                </div>
+                        </td>
+                        <td className="px-4 py-4">
+                           <div className="flex items-center gap-2">
+                             <Globe className="w-4 h-4 text-muted-foreground" />
+                             <span className="text-sm font-mono">{session.ip_address}</span>
+                           </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            {formatDistanceToNow(new Date(session.last_seen), { addSuffix: true })}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                            session.is_active ? 'bg-success/20 text-success' : 'bg-muted/20 text-muted-foreground'
+                          }`}>
+                            {session.is_active ? 'Active' : 'Revoked'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {session.is_active ? (
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              onClick={() => handleRevoke(session.id)}
+                              disabled={revoking === session.id}
+                              className="gap-2"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Revoke
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" disabled className="text-muted-foreground">
+                              Terminated
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {sessions.length === 0 && !loading && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                          No active sessions found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Terminations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentTerminations.map((termination, index) => (
-                    <div
-                      key={index}
-                      className="p-3 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-medium text-sm mb-1">{termination.user}</p>
-                          <p className="text-xs text-muted-foreground">{termination.device}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{termination.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <XCircle className="w-3 h-3 text-destructive" />
-                        <span className="text-xs text-muted-foreground">{termination.reason}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Session Policies
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {sessionPolicies.map((policy, index) => (
-                    <div
-                      key={index}
-                      className="p-4 rounded-lg bg-input-background/30"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{policy.name}</h4>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          policy.status === 'enabled' ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
-                        }`}>
-                          {policy.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{policy.value}</p>
-                    </div>
-                  ))}
-                </div>
-                <Button className="w-full mt-4">Configure Policies</Button>
-              </CardContent>
-            </Card>
-          </div>
         </main>
       </div>
     </div>

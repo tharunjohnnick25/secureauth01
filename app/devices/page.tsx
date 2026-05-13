@@ -1,7 +1,10 @@
+import { DeviceManagement } from '@/components/pages/DeviceManagement';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-import Devices from '@/components/pages/Devices';
-
-export default function Page() {
-  return <Devices />;
+export default function DevicesPage() {
+  return (
+    <AuthGuard>
+      <DeviceManagement />
+    </AuthGuard>
+  );
 }
-      

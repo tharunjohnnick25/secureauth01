@@ -1,76 +1,102 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
-
-export async function calculateRiskScore(req: NextRequest, userId: string) {
-  const supabase = await createServerSupabaseClient();
-  let score = 0;
-  const factors: string[] = [];
-
-  // 1. IP check
-  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-  const { data: previousLogins } = await supabase
-    .from('login_history')
-    .select('ip_address')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  const isNewIp = previousLogins?.every(log => log.ip_address !== ip);
-  if (isNewIp) {
-    score += 30;
-    factors.push('New IP Address detected');
-  }
-
-  // 2. Browser & Device Check
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-  // Here we'd parse user-agent and compare with known devices
-  const { data: knownDevices } = await supabase
-    .from('devices')
-    .select('user_agent')
-    .eq('user_id', userId);
-
-  const isNewDevice = !knownDevices?.some(d => d.user_agent === userAgent);
-  if (isNewDevice) {
-    score += 40;
-    factors.push('Unrecognized device');
-  }
-
-  // 3. Failed attempts check
-  const { data: user } = await supabase
-    .from('users')
-    .select('failed_login_attempts')
-    .eq('id', userId)
-    .single();
-
-  if (user && user.failed_login_attempts > 2) {
-    score += 20 * user.failed_login_attempts;
-    factors.push('Multiple failed login attempts');
-  }
-
-  // Cap at 100
-  score = Math.min(score, 100);
-  
-  let riskLevel = 'low';
-  if (score >= 80) riskLevel = 'critical';
-  else if (score >= 50) riskLevel = 'high';
-  else if (score >= 30) riskLevel = 'medium';
-
-  // Save risk score
-  const { data: riskRecord } = await supabase
-    .from('risk_scores')
-    .insert({
-      user_id: userId,
-      score,
-      risk_level: riskLevel,
-      factors
-    })
-    .select()
-    .single();
-
-  return {
-    score,
-    riskLevel,
-    factors,
-    riskRecordId: riskRecord?.id
+export interface RiskInput {
+  ip: string;
+  location: {
+    country: string;
+    city: string;
+    lat: number;
+    lng: number;
   };
+  fingerprint: {
+    browser: string;
+    os: string;
+    screen: string;
+    hash: string;
+  };
+  typingMetrics: {
+    dwellTime: number;
+    flightTime: number;
+    accuracy: number;
+  };
+  history?: {
+    lastIp: string;
+    lastLat: number;
+    lastLng: number;
+    lastLogin: string;
+    trustedDevices: string[];
+  };
+}
+
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export function calculateRiskScore(input: RiskInput): { score: number; level: RiskLevel; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // 1. Device Trust (High Weight)
+  if (input.history?.trustedDevices && !input.history.trustedDevices.includes(input.fingerprint.hash)) {
+    score += 40;
+    reasons.push('Unrecognized device detected');
+  }
+
+  // 2. IP Anomaly
+  if (input.history?.lastIp && input.history.lastIp !== input.ip) {
+    score += 15;
+    reasons.push('New IP address');
+  }
+
+  // 3. Location & Impossible Travel (Highest Weight)
+  if (input.history?.lastLat && input.history?.lastLng) {
+    const distance = calculateDistance(
+      input.history.lastLat,
+      input.history.lastLng,
+      input.location.lat,
+      input.location.lng
+    );
+
+    const timeDiffHours = (new Date().getTime() - new Date(input.history.lastLogin).getTime()) / (1000 * 60 * 60);
+    const speed = distance / timeDiffHours;
+
+    if (speed > 800) { // Over 800 km/h (Commercial Jet Speed)
+      score += 60;
+      reasons.push('Impossible travel detected');
+    } else if (distance > 500) {
+      score += 20;
+      reasons.push('Significant location change');
+    }
+  }
+
+  // 4. Typing Behavior Biometrics
+  if (input.typingMetrics.accuracy < 0.7) {
+    score += 10;
+    reasons.push('Unusual typing accuracy');
+  }
+  
+  if (input.typingMetrics.dwellTime > 200 || input.typingMetrics.dwellTime < 50) {
+    score += 10;
+    reasons.push('Typing cadence anomaly');
+  }
+
+  // Determine Level
+  let level: RiskLevel = 'low';
+  if (score >= 70) level = 'critical';
+  else if (score >= 40) level = 'high';
+  else if (score >= 20) level = 'medium';
+
+  return { score, level, reasons };
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+export function shouldTriggerBiometrics(level: RiskLevel): boolean {
+  return level === 'high' || level === 'critical' || level === 'medium';
 }

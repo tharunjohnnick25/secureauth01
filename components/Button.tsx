@@ -1,5 +1,8 @@
+'use client';
+
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '../lib/utils';
+import { motion } from 'framer-motion';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'outline' | 'ghost' | 'destructive' | 'success';
@@ -25,14 +28,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'px-6 py-3 text-lg',
     };
 
+    // Omit animation props that conflict with motion.button
+    const { onAnimationStart, onDragStart, onDragEnd, onDrag, ...safeProps } = props as any;
+
     return (
-      <button
-        ref={ref}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        ref={ref as any}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
-        {...props}
+        {...safeProps}
       >
         {children}
-      </button>
+      </motion.button>
     );
   }
 );

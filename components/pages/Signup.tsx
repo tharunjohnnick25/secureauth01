@@ -1,14 +1,17 @@
+'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/components/Button';
-import { Input } from '@/components/components/Input';
-import { Card } from '@/components/components/Card';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
+import { Card } from '@/components/Card';
+import { toast } from 'sonner';
 
 export function Signup() {
   const router = useRouter();
-  const navigate = (path: string) => router.push(path);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,9 +19,37 @@ export function Signup() {
     confirmPassword: '',
   });
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/verify-otp');
+    
+    if (!formData.email.endsWith('@gmail.com')) {
+      toast.error('Only @gmail.com accounts are allowed');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      toast.success(data.message || 'Account created successfully!');
+      router.push('/login');
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,11 +66,17 @@ export function Signup() {
           </div>
           <h1 className="text-3xl font-semibold mb-2">Create Account</h1>
           <p className="text-muted-foreground text-center">
-            Get started with SecureAuth today
+            Sign up with your @gmail.com account
           </p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
+          {formData.email && !formData.email.endsWith('@gmail.com') && (
+            <div className="p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive text-center">
+              Only @gmail.com domains are permitted.
+            </div>
+          )}
+          
           <div>
             <label className="block mb-2 text-sm">Full Name</label>
             <Input
@@ -53,10 +90,10 @@ export function Signup() {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Email Address</label>
+            <label className="block mb-2 text-sm">Gmail Address</label>
             <Input
               type="email"
-              placeholder="john.doe@example.com"
+              placeholder="user@gmail.com"
               icon={<Mail className="w-4 h-4" />}
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -97,26 +134,19 @@ export function Signup() {
             />
           </div>
 
-          <Button type="submit" className="w-full" size="lg">
-            Create Account
+          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => router.push('/login')}
             className="text-primary hover:underline"
           >
             Sign in
           </button>
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Shield className="w-4 h-4" />
-            <span>Protected by multi-factor risk-based authentication</span>
-          </div>
         </div>
       </Card>
     </div>

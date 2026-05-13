@@ -1,7 +1,10 @@
+import { ThreatIntelligence } from '@/components/pages/ThreatIntelligence';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-import ThreatIntelligence from '@/components/pages/ThreatIntelligence';
-
-export default function Page() {
-  return <ThreatIntelligence />;
+export default function ThreatIntelligencePage() {
+  return (
+    <AuthGuard>
+      <ThreatIntelligence />
+    </AuthGuard>
+  );
 }
-      

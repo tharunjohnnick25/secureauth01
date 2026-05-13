@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
+import { Shield } from 'lucide-react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,34 +14,68 @@ interface AuthGuardProps {
 export default function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, requiresMfa } = useAuthStore();
+  const { user, isAuthenticated, requiresBiometric, logout } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     const checkAuth = async () => {
+      setIsLoading(true);
+      
+      // Fallback: Check custom JWT in localStorage for Admin
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const localUserStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      let localUser = null;
+      try {
+         if (localUserStr) localUser = JSON.parse(localUserStr);
+      } catch (e) {}
+
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session && !isAuthenticated) {
-        router.push(`/login?redirectTo=${pathname}`);
+      if (!session && !isAuthenticated && !token) {
+        if (pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && !pathname.startsWith('/admin/login')) {
+          router.push(`/login?redirectTo=${pathname}`);
+        }
+        setIsLoading(false);
         return;
       }
 
-      if (requiresMfa) {
-        router.push('/mfa-verify');
+      if (requiresBiometric && pathname !== '/verify-biometric') {
+        router.push('/verify-biometric');
+        setIsLoading(false);
         return;
       }
 
-      if (requireAdmin && user?.role !== 'admin') {
-        router.push('/unauthorized');
-        return;
+      // Check admin status if required
+      if (requireAdmin) {
+        let isAdmin = false;
+        
+        if (session) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          if (profile?.role === 'admin') isAdmin = true;
+        } else if (localUser && localUser.role === 'admin') {
+          isAdmin = true;
+        }
+
+        if (!isAdmin) {
+          router.push('/unauthorized');
+          setIsLoading(false);
+          return;
+        }
       }
+      
+      setIsLoading(false);
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
-        useAuthStore.getState().logout();
+        logout();
         router.push('/login');
       }
     });
@@ -48,10 +83,21 @@ export default function AuthGuard({ children, requireAdmin = false }: AuthGuardP
     return () => {
       subscription.unsubscribe();
     };
-  }, [user, isAuthenticated, requiresMfa, requireAdmin, router, pathname, supabase.auth]);
+  }, [user, isAuthenticated, requiresBiometric, requireAdmin, router, pathname, logout, supabase]);
 
-  // Loading state can go here
-  if (!isAuthenticated && !requiresMfa) return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-cyber-dark)]">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center animate-pulse">
+            <Shield className="w-8 h-8 text-primary animate-bounce" />
+          </div>
+          <div className="absolute inset-0 rounded-2xl border border-primary/50 animate-ping" />
+        </div>
+        <p className="mt-6 text-primary font-cyber text-glow animate-pulse">Securing Session...</p>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

@@ -1,7 +1,9 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
+'use client';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
 import {
   Shield,
   AlertTriangle,
@@ -16,7 +18,7 @@ const securityAlerts = [
     id: 1,
     type: 'critical',
     title: 'Unusual login location detected',
-    description: 'Login attempt from Moscow, Russia - 3,487 miles from usual location',
+    description: 'Login attempt from Mumbai, India - 8,487 miles from usual location',
     time: '5 minutes ago',
     status: 'active',
   },
@@ -47,19 +49,19 @@ const securityAlerts = [
 ];
 
 const locationActivity = [
-  { country: 'United States', city: 'New York', logins: 245, risk: 'low' },
+  { country: 'India', city: 'Bangalore', logins: 245, risk: 'low' },
   { country: 'United Kingdom', city: 'London', logins: 89, risk: 'low' },
-  { country: 'Japan', city: 'Tokyo', logins: 34, risk: 'medium' },
-  { country: 'Russia', city: 'Moscow', logins: 1, risk: 'high' },
+  { country: 'United States', city: 'New York', logins: 34, risk: 'medium' },
+  { country: 'India', city: 'Chennai', logins: 1, risk: 'high' },
 ];
 
 export function Security() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617]">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-6">
+        <main className="pt-20 p-4 sm:p-6 lg:p-8">
           <div className="mb-6">
             <h1 className="text-3xl font-semibold mb-2">Security Center</h1>
             <p className="text-muted-foreground">

@@ -1,5 +1,5 @@
 
-import MfaSettings from '@/components/pages/MfaSettings';
+import { MfaSettings } from '@/components/pages/MfaSettings';
 
 export default function Page() {
   return <MfaSettings />;

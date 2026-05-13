@@ -7,15 +7,17 @@ interface User {
   role: string;
   first_name?: string;
   last_name?: string;
+  biometric_enabled?: boolean;
 }
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  requiresMfa: boolean;
+  requiresBiometric: boolean;
   riskLevel: 'low' | 'medium' | 'high' | 'critical' | null;
   setUser: (user: User | null) => void;
-  setRequiresMfa: (val: boolean, riskLevel?: AuthState['riskLevel']) => void;
+  setRequiresBiometric: (val: boolean, riskLevel?: AuthState['riskLevel']) => void;
+  clearBiometricRequirement: () => void;
   logout: () => void;
 }
 
@@ -24,11 +26,12 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      requiresMfa: false,
+      requiresBiometric: false,
       riskLevel: null,
-      setUser: (user) => set({ user, isAuthenticated: !!user, requiresMfa: false }),
-      setRequiresMfa: (requiresMfa, riskLevel) => set({ requiresMfa, riskLevel: riskLevel || null }),
-      logout: () => set({ user: null, isAuthenticated: false, requiresMfa: false, riskLevel: null }),
+      setUser: (user) => set({ user, isAuthenticated: !!user, requiresBiometric: false }),
+      setRequiresBiometric: (requiresBiometric, riskLevel) => set({ requiresBiometric, riskLevel: riskLevel || null }),
+      clearBiometricRequirement: () => set({ requiresBiometric: false, riskLevel: null }),
+      logout: () => set({ user: null, isAuthenticated: false, requiresBiometric: false, riskLevel: null }),
     }),
     {
       name: 'cyber-auth-storage',

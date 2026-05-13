@@ -1,6 +1,9 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
+'use client';
+
+import { useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
 import {
   Shield,
   Smartphone,
@@ -9,44 +12,89 @@ import {
   TrendingUp,
   CheckCircle,
   Clock,
+  Activity,
 } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-
-const authData = [
-  { date: 'Mon', success: 245, failed: 12 },
-  { date: 'Tue', success: 320, failed: 8 },
-  { date: 'Wed', success: 280, failed: 15 },
-  { date: 'Thu', success: 390, failed: 5 },
-  { date: 'Fri', success: 420, failed: 10 },
-  { date: 'Sat', success: 180, failed: 3 },
-  { date: 'Sun', success: 150, failed: 2 },
-];
-
-const riskData = [
-  { name: 'Low Risk', value: 1245, color: '#10b981' },
-  { name: 'Medium Risk', value: 342, color: '#f59e0b' },
-  { name: 'High Risk', value: 89, color: '#ef4444' },
-];
-
-const recentActivity = [
-  { action: 'Login from Chrome', location: 'New York, US', time: '2 min ago', risk: 'low' },
-  { action: 'New device added', location: 'London, UK', time: '1 hour ago', risk: 'medium' },
-  { action: 'Password changed', location: 'Tokyo, JP', time: '3 hours ago', risk: 'low' },
-  { action: 'Failed login attempt', location: 'Unknown', time: '5 hours ago', risk: 'high' },
-];
+import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { formatDistanceToNow } from 'date-fns';
 
 export function Dashboard() {
+  const { data: logins, loading: loginsLoading } = useRealtimeData('login_history', (q) => q.select('*').order('created_at', { ascending: false }).limit(20));
+  const { data: alerts } = useRealtimeData('alerts', (q) => q.select('*').order('created_at', { ascending: false }).limit(10));
+  const { data: devices } = useRealtimeData('devices');
+  const { data: allLogins } = useRealtimeData('login_history', (q) => q.select('status, created_at'));
+
+  // Calculate Stats
+  const stats = useMemo(() => {
+    const successCount = allLogins.filter(l => l.status === 'success').length;
+    const totalCount = allLogins.length;
+    const activeDevices = devices.length;
+    const activeAlerts = alerts.filter(a => !a.is_read).length;
+    
+    // Risk Score based on recent alerts
+    const highRiskAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').length;
+    let riskLevel = 'Low';
+    let riskColor = 'text-success';
+    if (highRiskAlerts > 5) {
+      riskLevel = 'Critical';
+      riskColor = 'text-destructive';
+    } else if (highRiskAlerts > 2) {
+      riskLevel = 'Medium';
+      riskColor = 'text-warning';
+    }
+
+    return { successCount, totalCount, activeDevices, activeAlerts, riskLevel, riskColor };
+  }, [allLogins, devices, alerts]);
+
+  // Aggregate Chart Data
+  const chartData = useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const last7Days = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return { day: days[d.getDay()], success: 0, failed: 0 };
+    });
+
+    allLogins.forEach(log => {
+      const logDate = new Date(log.created_at);
+      const dayName = days[logDate.getDay()];
+      const dayData = last7Days.find(d => d.day === dayName);
+      if (dayData) {
+        if (log.status === 'success') dayData.success++;
+        else dayData.failed++;
+      }
+    });
+
+    return last7Days;
+  }, [allLogins]);
+
+  const riskDistribution = useMemo(() => {
+    const low = allLogins.filter(l => (l.risk_score || 0) < 30).length;
+    const medium = allLogins.filter(l => (l.risk_score || 0) >= 30 && (l.risk_score || 0) < 70).length;
+    const high = allLogins.filter(l => (l.risk_score || 0) >= 70).length;
+
+    return [
+      { name: 'Low Risk', value: low, color: '#10b981' },
+      { name: 'Medium Risk', value: medium, color: '#f59e0b' },
+      { name: 'High Risk', value: high, color: '#ef4444' },
+    ];
+  }, [allLogins]);
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617]">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back! Here's your security overview
-            </p>
+        <main className="pt-20 p-4 sm:p-6 lg:p-8">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold mb-2">Security Dashboard</h1>
+              <p className="text-muted-foreground">Real-time enterprise-grade IAM monitoring</p>
+            </div>
+            <div className="flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+              <Activity className="w-4 h-4 text-primary animate-pulse" />
+              <span className="text-sm font-medium text-primary">System Live</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -56,11 +104,11 @@ export function Dashboard() {
                   <CheckCircle className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Authentications</p>
-                  <h3 className="text-2xl font-semibold">1,676</h3>
+                  <p className="text-sm text-muted-foreground">Success Audits</p>
+                  <h3 className="text-2xl font-semibold">{stats.successCount.toLocaleString()}</h3>
                   <p className="text-xs text-success flex items-center gap-1 mt-1">
                     <TrendingUp className="w-3 h-3" />
-                    +12% from last week
+                    Real-time
                   </p>
                 </div>
               </CardContent>
@@ -73,8 +121,8 @@ export function Dashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Devices</p>
-                  <h3 className="text-2xl font-semibold">24</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Across all users</p>
+                  <h3 className="text-2xl font-semibold">{stats.activeDevices}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Across entire network</p>
                 </div>
               </CardContent>
             </Card>
@@ -86,21 +134,21 @@ export function Dashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Security Alerts</p>
-                  <h3 className="text-2xl font-semibold">5</h3>
-                  <p className="text-xs text-muted-foreground mt-1">2 require attention</p>
+                  <h3 className="text-2xl font-semibold">{stats.activeAlerts}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Requiring review</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-success" />
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Risk Score</p>
-                  <h3 className="text-2xl font-semibold">Low</h3>
-                  <p className="text-xs text-success mt-1">System healthy</p>
+                  <p className="text-sm text-muted-foreground">System Risk</p>
+                  <h3 className={`text-2xl font-semibold ${stats.riskColor}`}>{stats.riskLevel}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Automated evaluation</p>
                 </div>
               </CardContent>
             </Card>
@@ -109,79 +157,83 @@ export function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Authentication Activity</CardTitle>
+                <CardTitle>Authentication Trends (Last 7 Days)</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={authData}>
-                    <defs>
-                      <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.1)" />
-                    <XAxis dataKey="date" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                        border: '1px solid rgba(99, 102, 241, 0.2)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="success"
-                      stroke="#6366f1"
-                      fillOpacity={1}
-                      fill="url(#successGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <div className="h-[350px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.1)" vertical={false} />
+                      <XAxis dataKey="day" stroke="#9ca3af" axisLine={false} tickLine={false} />
+                      <YAxis stroke="#9ca3af" axisLine={false} tickLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                          border: '1px solid rgba(99, 102, 241, 0.2)',
+                          borderRadius: '12px',
+                          backdropFilter: 'blur(8px)',
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="success"
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#successGradient)"
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Risk Distribution</CardTitle>
+                <CardTitle>Global Risk Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={riskData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {riskData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                        border: '1px solid rgba(99, 102, 241, 0.2)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="mt-4 space-y-2">
-                  {riskData.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="text-sm">{item.name}</span>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={riskDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={8}
+                        dataKey="value"
+                      >
+                        {riskDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                          border: '1px solid rgba(99, 102, 241, 0.2)',
+                          borderRadius: '12px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-6 space-y-3">
+                  {riskDistribution.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="text-sm font-medium">{item.name}</span>
                       </div>
-                      <span className="text-sm font-medium">{item.value}</span>
+                      <span className="text-sm font-bold">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -190,50 +242,78 @@ export function Dashboard() {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Real-time Authentication Stream</CardTitle>
+              <div className="text-xs text-muted-foreground">Showing last 20 events</div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          activity.risk === 'high'
-                            ? 'bg-destructive/20'
-                            : activity.risk === 'medium'
-                            ? 'bg-warning/20'
-                            : 'bg-success/20'
-                        }`}
-                      >
-                        {activity.risk === 'high' ? (
-                          <AlertTriangle className="w-5 h-5 text-destructive" />
-                        ) : activity.risk === 'medium' ? (
-                          <Shield className="w-5 h-5 text-warning" />
-                        ) : (
-                          <CheckCircle className="w-5 h-5 text-success" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{activity.action}</h4>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                          <MapPin className="w-3 h-3" />
-                          {activity.location}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        {activity.time}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                      <th className="px-4 py-3">Event</th>
+                      <th className="px-4 py-3">User</th>
+                      <th className="px-4 py-3">Source</th>
+                      <th className="px-4 py-3">Risk Score</th>
+                      <th className="px-4 py-3 text-right">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {logins.map((log) => (
+                      <tr key={log.id} className="hover:bg-primary/5 transition-colors group">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              log.status === 'success' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'
+                            }`}>
+                              {log.status === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                            </div>
+                            <span className="text-sm font-medium">
+                              {log.status === 'success' ? 'Authorized Session' : 'Blocked Attempt'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm font-mono text-muted-foreground">
+                          {log.user_id?.substring(0, 8)}...
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-muted-foreground" />
+                              {log.city || 'Unknown'}, {log.country || 'XX'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{log.ip_address}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                             <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                               <div 
+                                 className={`h-full rounded-full ${
+                                   (log.risk_score || 0) > 70 ? 'bg-destructive' : (log.risk_score || 0) > 30 ? 'bg-warning' : 'bg-success'
+                                 }`}
+                                 style={{ width: `${log.risk_score || 0}%` }}
+                               />
+                             </div>
+                             <span className="text-xs font-bold">{Math.round(log.risk_score || 0)}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {logins.length === 0 && !loginsLoading && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                          No recent activity found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

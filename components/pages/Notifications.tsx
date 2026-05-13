@@ -1,7 +1,9 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/components/Card';
-import { Sidebar } from '@/components/components/Sidebar';
-import { Navbar } from '@/components/components/Navbar';
-import { Button } from '@/components/components/Button';
+'use client';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { Sidebar } from '@/components/Sidebar';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
 import {
   Bell,
   Shield,
@@ -19,7 +21,7 @@ const notifications = [
     type: 'security',
     icon: Shield,
     title: 'Security Alert',
-    message: 'Unusual login detected from Moscow, Russia',
+    message: 'Unusual login detected from Chennai, India',
     time: '5 minutes ago',
     read: false,
     priority: 'high',
@@ -78,12 +80,12 @@ const notifications = [
 
 export function Notifications() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-6">
-          <div className="mb-6 flex items-center justify-between">
+        <main className="pt-20 p-4 sm:p-6 lg:p-8">
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold mb-2">Notifications</h1>
               <p className="text-muted-foreground">

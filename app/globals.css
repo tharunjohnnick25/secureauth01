@@ -13,7 +13,8 @@
 
 @layer base {
   body {
-    @apply bg-[var(--color-cyber-dark)] text-white font-cyber antialiased min-h-screen overflow-x-hidden;
+    font-family: var(--font-family-cyber);
+    @apply bg-[var(--color-cyber-dark)] text-white antialiased min-h-screen overflow-x-hidden;
     background-image: 
       radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.03), transparent 25%),
       radial-gradient(circle at 85% 30%, rgba(138, 43, 226, 0.03), transparent 25%);

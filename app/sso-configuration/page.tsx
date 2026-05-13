@@ -1,5 +1,5 @@
 
-import SsoConfiguration from '@/components/pages/SsoConfiguration';
+import { SsoConfiguration } from '@/components/pages/SsoConfiguration';
 
 export default function Page() {
   return <SsoConfiguration />;

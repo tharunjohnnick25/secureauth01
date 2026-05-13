@@ -1,5 +1,5 @@
 
-import NetworkMap from '@/components/pages/NetworkMap';
+import { NetworkMap } from '@/components/pages/NetworkMap';
 
 export default function Page() {
   return <NetworkMap />;

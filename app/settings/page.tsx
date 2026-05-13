@@ -1,7 +1,10 @@
+import { SecuritySettings } from '@/components/pages/SecuritySettings';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-import Settings from '@/components/pages/Settings';
-
-export default function Page() {
-  return <Settings />;
+export default function SettingsPage() {
+  return (
+    <AuthGuard>
+      <SecuritySettings />
+    </AuthGuard>
+  );
 }
-      
