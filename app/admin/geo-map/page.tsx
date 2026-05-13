@@ -11,19 +11,19 @@ export default function GeoMapPage() {
   const { data: locations, loading } = useRealtimeData('geo_locations');
 
   const stats = useMemo(() => {
-    const suspicious = locations.filter(l => l.is_suspicious).length;
-    const countries = new Set(locations.map(l => l.country)).size;
-    const cities = new Set(locations.map(l => l.city)).size;
+    const suspicious = (locations as any[]).filter((l: any) => l.is_suspicious).length;
+    const countries = new Set((locations as any[]).map((l: any) => l.country)).size;
+    const cities = new Set((locations as any[]).map((l: any) => l.city)).size;
     return { suspicious, countries, cities };
   }, [locations]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-6">
-          <div className="mb-6 flex items-center justify-between">
+        <main className="pt-20 p-4 sm:p-6 lg:p-8">
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold mb-2">Geographic Threat Map</h1>
               <p className="text-muted-foreground">Real-time visualization of global authentication events</p>
@@ -58,7 +58,7 @@ export default function GeoMapPage() {
                    <div className="relative w-full h-full max-w-4xl max-h-[500px] border border-border/50 rounded-2xl bg-muted/20 backdrop-blur-md flex items-center justify-center group">
                       <p className="text-muted-foreground text-sm font-medium animate-pulse">Initializing Holographic Projection...</p>
                       
-                      {locations.map((loc, i) => (
+                      {(locations as any[]).map((loc: any, i: number) => (
                         <div 
                           key={loc.id}
                           className={`absolute w-3 h-3 rounded-full animate-ping ${loc.is_suspicious ? 'bg-destructive' : 'bg-primary'}`}
@@ -71,7 +71,7 @@ export default function GeoMapPage() {
                       ))}
 
                       {/* Static indicators for suspicious regions */}
-                      {locations.filter(l => l.is_suspicious).map(loc => (
+                      {(locations as any[]).filter((l: any) => l.is_suspicious).map((loc: any) => (
                          <div 
                           key={`susp-${loc.id}`}
                           className="absolute flex flex-col items-center pointer-events-none"
@@ -108,7 +108,7 @@ export default function GeoMapPage() {
                    </CardHeader>
                    <CardContent>
                       <div className="space-y-4">
-                         {locations.filter(l => l.is_suspicious).slice(0, 5).map(loc => (
+                         {(locations as any[]).filter((l: any) => l.is_suspicious).slice(0, 5).map((loc: any) => (
                             <div key={loc.id} className="flex items-center justify-between p-2 rounded hover:bg-muted/50 transition-colors">
                                <div className="flex items-center gap-3">
                                   <MapPin className="w-4 h-4 text-destructive" />

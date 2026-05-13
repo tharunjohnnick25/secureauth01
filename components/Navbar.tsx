@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalSearch } from './SearchCommand';
 import { NotificationCenter } from './notifications/NotificationCenter';
 import { SidebarContent } from './Sidebar';
+import { MobileNav } from './MobileNav';
 
 export function Navbar() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -20,15 +21,16 @@ export function Navbar() {
         transition={{ duration: 0.5 }}
         className="fixed top-0 right-0 left-0 lg:left-64 h-16 glass-card border-b border-white/10 z-30"
       >
-        <div className="flex items-center justify-between h-full px-4 lg:px-6">
-          <div className="flex items-center gap-4 flex-1 max-w-xl">
+        <div className="flex items-center h-full px-4 lg:px-6 gap-3">
+          {/* Left: Hamburger + Search */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <button 
               onClick={() => setIsMobileNavOpen(true)}
-              className="lg:hidden p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
+              className="lg:hidden p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors flex-shrink-0"
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="flex-1 max-w-[200px] sm:max-w-md">
+            <div className="flex-1 min-w-0 max-w-[160px] sm:max-w-xs lg:max-w-md">
               <GlobalSearch />
             </div>
           </div>
@@ -88,6 +90,9 @@ export function Navbar() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileNav />
     </>
   );
 }

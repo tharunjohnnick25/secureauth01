@@ -42,11 +42,11 @@ const recentDeliveries = [
 
 export function Webhooks() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-6">
+        <main className="pt-20 p-4 sm:p-6 lg:p-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold mb-2">Webhooks</h1>

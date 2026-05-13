@@ -5,7 +5,22 @@ import './globals.css';
 
 export const metadata = {
   title: 'SecureAuth | Multi-Factor Risk-Based Authentication',
-  description: 'Enterprise-grade cybersecurity IAM platform',
+  description: 'Enterprise-grade AI cybersecurity IAM platform with adaptive MFA and behavioral biometrics.',
+  keywords: 'cybersecurity, authentication, MFA, zero trust, IAM, biometrics',
+  themeColor: '#020617',
+  appleWebApp: {
+    capable: true,
+    title: 'SecureAuth AI',
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: { telephone: false },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
