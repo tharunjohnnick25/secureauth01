@@ -7,7 +7,6 @@ export const metadata = {
   title: 'SecureAuth | Multi-Factor Risk-Based Authentication',
   description: 'Enterprise-grade AI cybersecurity IAM platform with adaptive MFA and behavioral biometrics.',
   keywords: 'cybersecurity, authentication, MFA, zero trust, IAM, biometrics',
-  themeColor: '#020617',
   appleWebApp: {
     capable: true,
     title: 'SecureAuth AI',
@@ -17,6 +16,7 @@ export const metadata = {
 };
 
 export const viewport = {
+  themeColor: '#020617',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

@@ -7,13 +7,32 @@ import { Navbar } from '@/components/Navbar';
 import { Globe, MapPin, Shield, AlertTriangle } from 'lucide-react';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 
-export default function GeoMapPage() {
-  const { data: locations, loading } = useRealtimeData('geo_locations');
+/**
+ * Interface representing a geographic authentication event
+ */
+interface GeoLocation {
+  id: string;
+  user_id?: string;
+  session_id?: string;
+  ip_address: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  is_suspicious: boolean;
+  created_at: string;
+  device?: string;
+}
 
+export default function GeoMapPage() {
+  // Strongly type the realtime data hook with GeoLocation interface
+  const { data: locations, loading } = useRealtimeData<GeoLocation>('geo_locations');
+
+  // Calculate statistics from the location data
   const stats = useMemo(() => {
-    const suspicious = (locations as any[]).filter((l: any) => l.is_suspicious).length;
-    const countries = new Set((locations as any[]).map((l: any) => l.country)).size;
-    const cities = new Set((locations as any[]).map((l: any) => l.city)).size;
+    const suspicious = locations.filter(l => l.is_suspicious).length;
+    const countries = new Set(locations.map(l => l.country)).size;
+    const cities = new Set(locations.map(l => l.city)).size;
     return { suspicious, countries, cities };
   }, [locations]);
 
@@ -53,36 +72,39 @@ export default function GeoMapPage() {
                 </CardHeader>
                 
                 <CardContent className="h-full relative z-10 flex items-center justify-center">
-                   {/* In a real production app, we would use react-simple-maps or similar here. 
-                       For this high-fidelity UI, we'll simulate the dot distribution on a glass world map. */}
+                   {/* Map visualization area */}
                    <div className="relative w-full h-full max-w-4xl max-h-[500px] border border-border/50 rounded-2xl bg-muted/20 backdrop-blur-md flex items-center justify-center group">
-                      <p className="text-muted-foreground text-sm font-medium animate-pulse">Initializing Holographic Projection...</p>
+                      {loading ? (
+                        <p className="text-muted-foreground text-sm font-medium animate-pulse">Initializing Holographic Projection...</p>
+                      ) : locations.length === 0 ? (
+                        <p className="text-muted-foreground text-sm font-medium">No active signals detected</p>
+                      ) : null}
                       
-                      {(locations as any[]).map((loc: any, i: number) => (
+                      {locations.map((loc, i) => (
                         <div 
                           key={loc.id}
                           className={`absolute w-3 h-3 rounded-full animate-ping ${loc.is_suspicious ? 'bg-destructive' : 'bg-primary'}`}
                           style={{ 
-                            left: `${((loc.longitude || 0) + 180) / 3.6}%`, 
-                            top: `${(90 - (loc.latitude || 0)) / 1.8}%`,
+                            left: `${((Number(loc.longitude) || 0) + 180) / 3.6}%`, 
+                            top: `${(90 - (Number(loc.latitude) || 0)) / 1.8}%`,
                             animationDelay: `${i * 100}ms`
                           }}
                         />
                       ))}
 
                       {/* Static indicators for suspicious regions */}
-                      {(locations as any[]).filter((l: any) => l.is_suspicious).map((loc: any) => (
+                      {locations.filter(l => l.is_suspicious).map((loc) => (
                          <div 
                           key={`susp-${loc.id}`}
                           className="absolute flex flex-col items-center pointer-events-none"
                           style={{ 
-                            left: `${((loc.longitude || 0) + 180) / 3.6}%`, 
-                            top: `${(90 - (loc.latitude || 0)) / 1.8}%`,
+                            left: `${((Number(loc.longitude) || 0) + 180) / 3.6}%`, 
+                            top: `${(90 - (Number(loc.latitude) || 0)) / 1.8}%`,
                           }}
                         >
                            <AlertTriangle className="w-5 h-5 text-destructive mb-1 animate-bounce" />
                            <div className="bg-destructive/90 text-white text-[8px] px-2 py-0.5 rounded font-bold uppercase backdrop-blur-md">
-                              Threat
+                               Threat
                            </div>
                         </div>
                       ))}
@@ -108,16 +130,16 @@ export default function GeoMapPage() {
                    </CardHeader>
                    <CardContent>
                       <div className="space-y-4">
-                         {(locations as any[]).filter((l: any) => l.is_suspicious).slice(0, 5).map((loc: any) => (
+                         {locations.filter(l => l.is_suspicious).slice(0, 5).map((loc) => (
                             <div key={loc.id} className="flex items-center justify-between p-2 rounded hover:bg-muted/50 transition-colors">
                                <div className="flex items-center gap-3">
                                   <MapPin className="w-4 h-4 text-destructive" />
                                   <span className="text-xs font-medium">{loc.city}, {loc.country}</span>
-                               </div>
+                                </div>
                                <span className="text-[10px] text-muted-foreground">{new Date(loc.created_at).toLocaleTimeString()}</span>
                             </div>
                          ))}
-                         {stats.suspicious === 0 && <p className="text-xs text-muted-foreground text-center py-4">No regional threats detected.</p>}
+                         {stats.suspicious === 0 && !loading && <p className="text-xs text-muted-foreground text-center py-4">No regional threats detected.</p>}
                       </div>
                    </CardContent>
                 </Card>
