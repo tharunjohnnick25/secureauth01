@@ -9,8 +9,8 @@ import { TrendingUp, TrendingDown, Activity, ShieldCheck, Globe, Zap } from 'luc
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 
 export function Analytics() {
-  const { data: logins } = useRealtimeData('login_history');
-  const { data: alerts } = useRealtimeData('alerts');
+  const { data: logins } = useRealtimeData('login_logs');
+  const { data: alerts } = useRealtimeData('threat_logs');
 
   const stats = useMemo(() => {
     const total = (logins as any[]).length || 1;
@@ -70,7 +70,7 @@ export function Analytics() {
       <Sidebar />
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-4 sm:p-6 lg:p-8">
+        <main className="pt-24 p-4 sm:p-6 lg:p-8">
           <div className="mb-6">
             <h1 className="text-3xl font-semibold mb-2">Security Analytics</h1>
             <p className="text-muted-foreground">Deep behavioral insights and threat vector analysis</p>

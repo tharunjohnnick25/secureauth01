@@ -1,12 +1,27 @@
+import { AuthGuardWrapper } from '@/components/auth/AuthGuardWrapper';
 import AnimateLayout from '@/components/AnimateLayout';
 import { Toaster } from 'sonner';
 import { SessionTimeout } from '@/components/SessionTimeout';
 import './globals.css';
 
 export const metadata = {
-  title: 'SecureAuth | Multi-Factor Risk-Based Authentication',
-  description: 'Enterprise-grade AI cybersecurity IAM platform with adaptive MFA and behavioral biometrics.',
-  keywords: 'cybersecurity, authentication, MFA, zero trust, IAM, biometrics',
+  title: 'SecureAuth AI | Multi-Factor Risk-Based Authentication',
+  description: 'Enterprise-grade AI cybersecurity IAM platform with adaptive MFA, zero-trust protocols, and behavioral biometrics.',
+  keywords: 'cybersecurity, authentication, MFA, zero trust, IAM, biometrics, risk-based auth, nextjs auth',
+  authors: [{ name: 'SecureAuth AI Team' }],
+  openGraph: {
+    title: 'SecureAuth AI | The Future of Identity Management',
+    description: 'Enterprise-grade zero-trust IAM platform with behavioral AI.',
+    url: 'https://secureauth-ai.vercel.app',
+    siteName: 'SecureAuth AI',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SecureAuth AI | Next-Gen Authentication',
+    description: 'Protecting your workforce with adaptive risk-based authentication.',
+  },
   appleWebApp: {
     capable: true,
     title: 'SecureAuth AI',
@@ -44,9 +59,11 @@ export default function RootLayout({
         
         <main className="flex-1">
           <SessionTimeout />
-          <AnimateLayout>
-            {children}
-          </AnimateLayout>
+          <AuthGuardWrapper>
+            <AnimateLayout>
+              {children}
+            </AnimateLayout>
+          </AuthGuardWrapper>
         </main>
 
         <Toaster 

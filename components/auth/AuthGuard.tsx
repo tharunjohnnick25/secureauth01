@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
@@ -14,87 +14,103 @@ interface AuthGuardProps {
 export default function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, requiresBiometric, logout } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const { user, isAuthenticated, requiresBiometric, setUser, logout } = useAuthStore();
+  const [hasChecked, setHasChecked] = useState(false);
+  const isCheckingRef = useRef(false);
 
+  // ✅ FIX: Only run once on mount, not on every route change
   useEffect(() => {
+    // If already authenticated via persisted store, skip the async check immediately
+    if (isAuthenticated && user) {
+      setHasChecked(true);
+      return;
+    }
+
+    // Prevent duplicate concurrent calls
+    if (isCheckingRef.current || hasChecked) return;
+    isCheckingRef.current = true;
+
     const checkAuth = async () => {
-      setIsLoading(true);
-      
-      // Fallback: Check custom JWT in localStorage for Admin
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const localUserStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      let localUser = null;
       try {
-         if (localUserStr) localUser = JSON.parse(localUserStr);
-      } catch (e) {}
+        const supabase = createClient();
+        // Give a timeout to getSession to prevent infinite loading
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+        );
 
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session && !isAuthenticated && !token) {
-        if (pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && !pathname.startsWith('/admin/login')) {
-          router.push(`/login?redirectTo=${pathname}`);
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+
+        if (session && !isAuthenticated) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email ?? '',
+            role: (session.user.user_metadata?.role as string) ?? 'user',
+            first_name: session.user.user_metadata?.first_name,
+            last_name: session.user.user_metadata?.last_name,
+          });
+        } else if (!session && !isAuthenticated) {
+          const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+          if (!token) {
+            router.replace(`/login?redirectTo=${encodeURIComponent(pathname)}`);
+            return;
+          }
         }
-        setIsLoading(false);
-        return;
+      } catch (error) {
+        console.error('AuthGuard check failed:', error);
+      } finally {
+        setHasChecked(true);
+        isCheckingRef.current = false;
       }
-
-      if (requiresBiometric && pathname !== '/verify-biometric') {
-        router.push('/verify-biometric');
-        setIsLoading(false);
-        return;
-      }
-
-      // Check admin status if required
-      if (requireAdmin) {
-        let isAdmin = false;
-        
-        if (session) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          if (profile?.role === 'admin') isAdmin = true;
-        } else if (localUser && localUser.role === 'admin') {
-          isAdmin = true;
-        }
-
-        if (!isAdmin) {
-          router.push('/unauthorized');
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      setIsLoading(false);
     };
 
     checkAuth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  // Listen to auth state changes once on mount — logout detection
+  useEffect(() => {
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         logout();
-        router.push('/login');
+        router.replace('/login');
       }
     });
+    return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user, isAuthenticated, requiresBiometric, requireAdmin, router, pathname, logout, supabase]);
+  // Handle biometric requirement
+  useEffect(() => {
+    if (requiresBiometric && pathname !== '/verify-biometric') {
+      router.replace('/verify-biometric');
+    }
+  }, [requiresBiometric, pathname, router]);
 
-  if (isLoading) {
+  // Handle admin requirement
+  useEffect(() => {
+    if (hasChecked && isAuthenticated && requireAdmin && user?.role !== 'admin') {
+      router.replace('/unauthorized');
+    }
+  }, [hasChecked, isAuthenticated, requireAdmin, user, router]);
+
+  // ✅ FIX: If auth state is persisted in Zustand, render children IMMEDIATELY.
+  // The loading screen only shows when there is genuinely no auth state at all on first visit.
+  if (isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  // Not authenticated and haven't finished checking — show minimal, FAST loading indicator
+  if (!hasChecked && !isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-cyber-dark)]">
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center animate-pulse">
-            <Shield className="w-8 h-8 text-primary animate-bounce" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-primary animate-spin" style={{ animationDuration: '1.5s' }} />
           </div>
-          <div className="absolute inset-0 rounded-2xl border border-primary/50 animate-ping" />
         </div>
-        <p className="mt-6 text-primary font-cyber text-glow animate-pulse">Securing Session...</p>
+        <p className="mt-4 text-primary/70 text-sm animate-pulse">Securing Session...</p>
       </div>
     );
   }

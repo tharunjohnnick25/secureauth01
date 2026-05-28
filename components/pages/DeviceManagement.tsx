@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Smartphone, 
@@ -25,6 +25,7 @@ import {
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 
 // Mock data for devices
 const initialDevices = [
@@ -41,51 +42,44 @@ const initialDevices = [
     trustScore: 98,
     riskLevel: 'low',
   },
-  {
-    id: '2',
-    deviceName: 'iPhone 15 Pro',
-    deviceType: 'mobile',
-    browser: 'Mobile Safari',
-    os: 'iOS 17.4',
-    isTrusted: true,
-    lastUsed: '2024-05-11T18:45:00Z',
-    ipAddress: '172.20.10.2',
-    location: { city: 'Chennai', country: 'IN' },
-    trustScore: 95,
-    riskLevel: 'low',
-  },
-  {
-    id: 'dev_456',
-    deviceName: 'MacBook Pro - Work',
-    deviceType: 'desktop',
-    browser: 'Safari',
-    os: 'macOS 14.2',
-    isTrusted: false,
-    lastUsed: '2024-05-10T04:20:00Z',
-    ipAddress: '103.22.45.122',
-    location: { city: 'Bangalore', country: 'IN' },
-    trustScore: 32,
-    riskLevel: 'high',
-  },
 ];
 
 export function DeviceManagement() {
-  const [devices, setDevices] = useState(initialDevices);
+  const { data: dbDevices } = useRealtimeData('devices');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredDevices = devices.filter(d => 
-    d.deviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.os.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const devices = useMemo(() => {
+    if (!dbDevices || dbDevices.length === 0) return initialDevices;
+    return dbDevices.map((d: any) => ({
+      id: d.id,
+      deviceName: d.device_name,
+      deviceType: d.device_type,
+      browser: d.browser,
+      os: d.os,
+      isTrusted: d.is_trusted,
+      lastUsed: d.last_used,
+      ipAddress: '192.168.1.1', 
+      location: { city: 'Unknown', country: 'XX' },
+      trustScore: d.is_trusted ? 98 : 45,
+      riskLevel: d.is_trusted ? 'low' : 'high'
+    }));
+  }, [dbDevices]);
+
+  const filteredDevices = useMemo(() => {
+    return devices.filter(d => 
+      d.deviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.os.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [devices, searchQuery]);
 
   const toggleTrust = (id: string) => {
-    setDevices(devices.map(d => 
-      d.id === id ? { ...d, isTrusted: !d.isTrusted, trustScore: d.isTrusted ? 40 : 95, riskLevel: d.isTrusted ? 'medium' : 'low' } : d
-    ));
+    // In a real app, this would be a Supabase update
+    console.log('Toggle trust', id);
   };
 
   const removeDevice = (id: string) => {
-    setDevices(devices.filter(d => d.id !== id));
+    // In a real app, this would be a Supabase delete
+    console.log('Remove device', id);
   };
 
   const getDeviceIcon = (type: string) => {

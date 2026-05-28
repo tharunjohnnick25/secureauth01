@@ -31,6 +31,7 @@ export function useLocation() {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
+          if (!response.ok) throw new Error('Geocoding failed');
           const data = await response.json();
           
           setLocation({

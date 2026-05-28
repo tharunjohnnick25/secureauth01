@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { motion } from 'framer-motion';
 import { 
   ShieldAlert, 
@@ -51,8 +52,27 @@ const vectorDistribution = [
   { name: 'Impossible Travel', value: 10, color: '#8a2be2' },
 ];
 
+
 export function ThreatIntelligence() {
   const [activeTab, setActiveTab] = useState('overview');
+  const { data: dbThreats } = useRealtimeData('threat_logs');
+
+  const threats = useMemo(() => {
+    if (!dbThreats || dbThreats.length === 0) {
+      return [
+        { type: 'IMPOSSIBLE_TRAVEL', user: 'adm_201', risk: 'CRITICAL', origin: 'London, UK', time: '2m ago' },
+        { type: 'CREDENTIAL_STUFFING', user: 'unknown', risk: 'HIGH', origin: 'Mumbai, IN', time: '8m ago' },
+        { type: 'BRUTE_FORCE_BLOCK', user: 'usr_823', risk: 'HIGH', origin: 'Chennai, IN', time: '14m ago' },
+      ];
+    }
+    return dbThreats.map((t: any) => ({
+      type: t.type,
+      user: 'unknown',
+      risk: t.severity,
+      origin: t.source_ip || 'Unknown',
+      time: 'Just now'
+    }));
+  }, [dbThreats]);
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
@@ -211,14 +231,8 @@ export function ThreatIntelligence() {
                   </div>
                </div>
 
-               <div className="space-y-3">
-                  {[
-                    { type: 'IMPOSSIBLE_TRAVEL', user: 'adm_201', risk: 'CRITICAL', origin: 'London, UK', time: '2m ago' },
-                    { type: 'CREDENTIAL_STUFFING', user: 'unknown', risk: 'HIGH', origin: 'Mumbai, IN', time: '8m ago' },
-                    { type: 'BRUTE_FORCE_BLOCK', user: 'usr_823', risk: 'HIGH', origin: 'Chennai, IN', time: '14m ago' },
-                    { type: 'VPN_DETECTION', user: 'usr_110', risk: 'MEDIUM', origin: 'Amsterdam, NL', time: '22m ago' },
-                    { type: 'PROXY_ANOMALY', user: 'adm_201', risk: 'HIGH', origin: 'Unknown', time: '30m ago' },
-                  ].map((incident, i) => (
+                <div className="space-y-3">
+                  {threats.map((incident, i) => (
                     <motion.div 
                       key={i}
                       initial={{ opacity: 0, x: -10 }}

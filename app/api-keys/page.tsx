@@ -1,10 +1,6 @@
 import { ApiKeys } from '@/components/pages/ApiKeys';
-import AuthGuard from '@/components/auth/AuthGuard';
 
+// ✅ FIX: Removed duplicate AuthGuard — root layout already handles auth
 export default function ApiKeysPage() {
-  return (
-    <AuthGuard>
-      <ApiKeys />
-    </AuthGuard>
-  );
+  return <ApiKeys />;
 }

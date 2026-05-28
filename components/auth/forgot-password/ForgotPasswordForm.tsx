@@ -1,0 +1,98 @@
+"use client"
+
+import * as React from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Icons } from "@/components/ui/icons"
+
+const formSchema = z.object({
+  email: z.string().email("Invalid email address"),
+})
+
+export function ForgotPasswordForm() {
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [isSubmitted, setIsSubmitted] = React.useState(false)
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true)
+    // Placeholder for API call
+    console.log(values)
+    setTimeout(() => {
+      setIsLoading(false)
+      setIsSubmitted(true)
+    }, 2000)
+  }
+
+  if (isSubmitted) {
+    return (
+      <Card className="w-full max-w-md border-white/10 bg-black/40 backdrop-blur-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight text-white">Check your email</CardTitle>
+          <CardDescription className="text-zinc-400">
+            We've sent a password reset link to your email address.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button variant="ghost" className="w-full text-zinc-400 hover:text-white" onClick={() => setIsSubmitted(false)}>
+            Back to login
+          </Button>
+        </CardFooter>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="w-full max-w-md border-white/10 bg-black/40 backdrop-blur-xl">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold tracking-tight text-white">Forgot password</CardTitle>
+        <CardDescription className="text-zinc-400">
+          Enter your email to receive a password reset link
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-zinc-300">Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="name@company.com" 
+                      {...field} 
+                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 focus:ring-primary/50"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button className="w-full bg-primary hover:bg-primary/90 text-white" type="submit" disabled={isLoading}>
+              {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+              Send Reset Link
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter>
+        <Button variant="link" className="w-full text-zinc-400 hover:text-white" onClick={() => window.location.href = '/auth/login'}>
+          Back to login
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}

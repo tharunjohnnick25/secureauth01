@@ -22,7 +22,7 @@ const Hero = () => {
             className="px-4 py-2 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 mb-8"
           >
             <span className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-blue-300">New: AI-Powered Risk Scoring v2.0</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-blue-300">New: AI-Powered Office Security v2.0</span>
           </motion.div>
 
           {/* Title */}
@@ -32,7 +32,7 @@ const Hero = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 leading-tight"
           >
-            The Future of <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Secure Identity</span> is AI-Driven
+            Intelligent <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Employee Access</span> Management
           </motion.h1>
 
           {/* Description */}
@@ -42,8 +42,8 @@ const Hero = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl"
           >
-            Protect your enterprise with zero-trust adaptive authentication. 
-            Leveraging behavioral biometrics, device fingerprinting, and real-time AI risk analysis.
+            Protect your enterprise workforce with zero-trust adaptive authentication. 
+            Leveraging real-time office login monitoring, device fingerprinting, and AI risk analysis to secure internal portals and company resources.
           </motion.p>
 
           {/* Buttons */}
@@ -60,7 +60,7 @@ const Hero = () => {
               Start Free Trial <ArrowRight className="w-5 h-5" />
             </Link>
             <Link 
-              href="#demo" 
+              href="/demo" 
               className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl transition-all backdrop-blur-sm"
             >
               Watch Live Demo

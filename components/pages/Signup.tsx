@@ -22,8 +22,8 @@ export function Signup() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email.endsWith('@gmail.com')) {
-      toast.error('Only @gmail.com accounts are allowed');
+    if (!formData.email.endsWith('@gmail.com') && !formData.email.endsWith('@company.com')) {
+      toast.error('Please use your company email address');
       return;
     }
 
@@ -43,7 +43,8 @@ export function Signup() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      toast.success(data.message || 'Account created successfully!');
+      toast.success(data.message || 'Access request submitted! Waiting for admin approval.');
+      // Keep them on a success screen or redirect to login
       router.push('/login');
     } catch (error: any) {
       toast.error(error.message);
@@ -64,16 +65,16 @@ export function Signup() {
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/30">
             <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-semibold mb-2">Create Account</h1>
+          <h1 className="text-3xl font-semibold mb-2">Request Access</h1>
           <p className="text-muted-foreground text-center">
-            Sign up with your @gmail.com account
+            Register with your company email
           </p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
-          {formData.email && !formData.email.endsWith('@gmail.com') && (
+          {formData.email && !formData.email.endsWith('@gmail.com') && !formData.email.endsWith('@company.com') && (
             <div className="p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive text-center">
-              Only @gmail.com domains are permitted.
+              Please use a valid company email domain.
             </div>
           )}
           
@@ -90,10 +91,10 @@ export function Signup() {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Gmail Address</label>
+            <label className="block mb-2 text-sm">Company Email</label>
             <Input
               type="email"
-              placeholder="user@gmail.com"
+              placeholder="employee@company.com"
               icon={<Mail className="w-4 h-4" />}
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -135,7 +136,7 @@ export function Signup() {
           </div>
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? 'Submitting Request...' : 'Submit Access Request'}
           </Button>
         </form>
 

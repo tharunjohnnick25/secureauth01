@@ -35,6 +35,9 @@ import {
   FileBarChart,
   HelpCircle,
   Ticket,
+  Clock,
+  Building2,
+  MapPin,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -43,105 +46,41 @@ const navigationSections = [
     title: 'Overview',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { name: 'Attendance & Login', href: '/attendance', icon: Clock },
       { name: 'Notifications', href: '/notifications', icon: Bell },
     ],
   },
   {
-    title: 'Security',
+    title: 'Employee Access',
     items: [
+      { name: 'Employee Directory', href: '/employees', icon: Users },
+      { name: 'Access Requests', href: '/access-requests', icon: FileCheck },
+      { name: 'Departments', href: '/departments', icon: Building2 },
+      { name: 'Roles & Permissions', href: '/roles-permissions', icon: UserCog },
+    ],
+  },
+  {
+    title: 'Office Security',
+    items: [
+      { name: 'Office Logins', href: '/office-logins', icon: MapPin },
       { name: 'AI Risk Monitoring', href: '/dashboard/risk', icon: ShieldAlert },
+      { name: 'Device Fingerprinting', href: '/devices', icon: Smartphone },
       { name: 'Security Center', href: '/security', icon: Shield },
       { name: 'Threat Intelligence', href: '/threat-intelligence', icon: Target },
-      { name: 'Vulnerability Scanner', href: '/vulnerability-scanner', icon: Bug },
-      { name: 'Compliance Reports', href: '/compliance-reports', icon: FileCheck },
-      { name: 'Risk Assessment', href: '/risk-assessment', icon: AlertTriangle },
-      { name: 'Incident Response', href: '/incident-response', icon: Activity },
-      { name: 'Forensics', href: '/forensics', icon: FileText },
     ],
   },
   {
-    title: 'Management',
+    title: 'System Management',
     items: [
-      { name: 'Devices', href: '/devices', icon: Smartphone },
-      { name: 'Team Management', href: '/team-management', icon: Users },
-      { name: 'Roles & Permissions', href: '/roles-permissions', icon: UserCog },
-      { name: 'Access Control Matrix', href: '/admin/permissions', icon: Lock },
-      { name: 'Session Management', href: '/session-management', icon: Activity },
-      { name: 'Admin Panel', href: '/admin', icon: Users },
-    ],
-  },
-  {
-    title: 'Integration',
-    items: [
-      { name: 'API Keys', href: '/api-keys', icon: Key },
-      { name: 'Webhooks', href: '/webhooks', icon: Webhook },
-      { name: 'Integrations', href: '/integrations', icon: Plug },
-      { name: 'SSO Configuration', href: '/sso-configuration', icon: Lock },
-      { name: 'LDAP Integration', href: '/ldap-integration', icon: Network },
-    ],
-  },
-  {
-    title: 'Monitoring',
-    items: [
-      { name: 'Security Events', href: '/security-events', icon: AlertTriangle },
       { name: 'Audit Logs', href: '/audit-logs', icon: FileText },
-      { name: 'Network Map', href: '/network-map', icon: Network },
-      { name: 'Geolocation Map', href: '/geolocation-map', icon: Globe },
-      { name: 'System Health', href: '/system-health', icon: Gauge },
-      { name: 'Performance Metrics', href: '/performance-metrics', icon: TrendingUp },
-    ],
-  },
-  {
-    title: 'Reports',
-    items: [
-      { name: 'Reports Dashboard', href: '/reports-dashboard', icon: FileBarChart },
-      { name: 'Custom Reports', href: '/custom-reports', icon: FileText },
-      { name: 'Scheduled Reports', href: '/scheduled-reports', icon: FileCheck },
-      { name: 'Usage Statistics', href: '/usage-statistics', icon: BarChart3 },
-    ],
-  },
-  {
-    title: 'Configuration',
-    items: [
+      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { name: 'Subscription Plans', href: '/pricing', icon: CreditCard },
+      { name: 'API Integrations', href: '/integrations', icon: Plug },
       { name: 'Settings', href: '/settings', icon: Settings },
-      { name: 'MFA Settings', href: '/mfa-settings', icon: Shield },
-      { name: 'Password Policies', href: '/password-policies', icon: Lock },
-      { name: 'Alerts Configuration', href: '/alerts-configuration', icon: Bell },
-      { name: 'Email Templates', href: '/email-templates', icon: Mail },
-      { name: 'Notification Rules', href: '/notification-rules', icon: Bell },
-    ],
-  },
-  {
-    title: 'Developer',
-    items: [
-      { name: 'API Documentation', href: '/api-documentation', icon: FileCode },
-      { name: 'Developer Portal', href: '/developer-portal', icon: FileCode },
-    ],
-  },
-  {
-    title: 'Billing',
-    items: [
-      { name: 'Billing', href: '/billing', icon: CreditCard },
-      { name: 'Subscription Plans', href: '/subscription-plans', icon: CreditCard },
-    ],
-  },
-  {
-    title: 'Data',
-    items: [
-      { name: 'Export Data', href: '/export-data', icon: Download },
-      { name: 'Import Data', href: '/import-data', icon: Upload },
-      { name: 'Backup & Recovery', href: '/backup-recovery', icon: Database },
-    ],
-  },
-  {
-    title: 'Support',
-    items: [
-      { name: 'Help Center', href: '/help-center', icon: HelpCircle },
-      { name: 'Support Tickets', href: '/support-tickets', icon: Ticket },
     ],
   },
 ];
+
 
 import { motion } from 'framer-motion';
 
@@ -157,7 +96,7 @@ export function SidebarContent() {
           </div>
           <div>
             <h2 className="font-semibold text-white">SecureAuth</h2>
-            <p className="text-xs text-gray-400">Risk-Based MFA</p>
+            <p className="text-xs text-gray-400">Employee Access</p>
           </div>
         </Link>
       </div>
@@ -200,8 +139,8 @@ export function SidebarContent() {
             SA
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-white">Security Admin</p>
-            <p className="text-xs text-gray-500 truncate">admin@secureauth.io</p>
+            <p className="text-sm font-medium truncate text-white">System Admin</p>
+            <p className="text-xs text-gray-500 truncate">admin@mail.com</p>
           </div>
         </Link>
       </div>

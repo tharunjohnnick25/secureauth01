@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
@@ -14,6 +15,7 @@ import {
   Info,
   Trash2,
 } from 'lucide-react';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 
 const notifications = [
   {
@@ -79,12 +81,37 @@ const notifications = [
 ];
 
 export function Notifications() {
+  const { data: dbNotifications } = useRealtimeData('notifications');
+
+  const displayNotifications = useMemo(() => {
+    const base = (!dbNotifications || dbNotifications.length === 0) ? notifications : dbNotifications;
+    return base.map((n: any) => ({
+      ...n,
+      id: n.id,
+      type: n.type || (n as any).type,
+      title: n.title,
+      message: n.message,
+      time: n.time || 'New',
+      read: n.is_read ?? n.read,
+      priority: (n.priority || 'low').toLowerCase(),
+      // Custom mapping for icons since we can't store JSX in DB
+      iconName: n.type === 'SECURITY' ? 'Shield' : 
+                n.type === 'DEVICE' ? 'Smartphone' :
+                n.type === 'LOCATION' ? 'MapPin' :
+                n.type === 'SUCCESS' ? 'CheckCircle' :
+                n.type === 'WARNING' ? 'AlertTriangle' : 'Info'
+    }));
+  }, [dbNotifications]);
+
+  const IconMap: Record<string, any> = {
+    Shield, Smartphone, MapPin, CheckCircle, AlertTriangle, Info
+  };
   return (
     <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-4 sm:p-6 lg:p-8">
+        <main className="pt-24 p-4 sm:p-6 lg:p-8">
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold mb-2">Notifications</h1>
@@ -110,7 +137,7 @@ export function Notifications() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total</p>
-                  <h3 className="text-2xl font-semibold">{notifications.length}</h3>
+                  <h3 className="text-2xl font-semibold">{displayNotifications.length}</h3>
                 </div>
               </CardContent>
             </Card>
@@ -123,7 +150,7 @@ export function Notifications() {
                 <div>
                   <p className="text-sm text-muted-foreground">Unread</p>
                   <h3 className="text-2xl font-semibold">
-                    {notifications.filter((n) => !n.read).length}
+                    {displayNotifications.filter((n: any) => !n.read).length}
                   </h3>
                 </div>
               </CardContent>
@@ -137,7 +164,7 @@ export function Notifications() {
                 <div>
                   <p className="text-sm text-muted-foreground">High Priority</p>
                   <h3 className="text-2xl font-semibold">
-                    {notifications.filter((n) => n.priority === 'high').length}
+                    {displayNotifications.filter((n: any) => n.priority === 'high').length}
                   </h3>
                 </div>
               </CardContent>
@@ -150,8 +177,8 @@ export function Notifications() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {notifications.map((notification) => {
-                  const Icon = notification.icon;
+                {displayNotifications.map((notification: any) => {
+                  const Icon = IconMap[notification.iconName] || Info;
                   return (
                     <div
                       key={notification.id}

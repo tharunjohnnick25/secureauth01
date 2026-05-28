@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
@@ -12,6 +13,7 @@ import {
   Filter,
   Download,
 } from 'lucide-react';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 
 const loginLocations = [
   { city: 'New York', country: 'United States', lat: 40.7128, lng: -74.0060, logins: 1245, status: 'normal', risk: 'low' },
@@ -46,6 +48,23 @@ const anomalies = [
 ];
 
 export function GeolocationMap() {
+  const { data: dbLogins } = useRealtimeData('login_logs');
+
+  const locations = useMemo(() => {
+    if (!dbLogins || dbLogins.length === 0) return loginLocations;
+    // Count logins per city
+    const counts: Record<string, any> = {};
+    dbLogins.forEach((l: any) => {
+      const city = l.city || 'Unknown';
+      if (!counts[city]) {
+        counts[city] = { city, country: l.country || 'XX', lat: 0, lng: 0, logins: 0, status: 'normal', risk: 'low' };
+      }
+      counts[city].logins++;
+      if (l.status !== 'SUCCESS') counts[city].status = 'suspicious';
+      if (l.risk_score > 70) counts[city].risk = 'high';
+    });
+    return Object.values(counts);
+  }, [dbLogins]);
   return (
     <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />

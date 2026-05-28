@@ -25,6 +25,11 @@ export function useBiometrics() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, attestationResponse }),
       });
+      
+      if (!verificationRes.ok) {
+        const errorText = await verificationRes.text();
+        throw new Error(errorText || 'Failed to verify registration');
+      }
       const verification = await verificationRes.json();
 
       if (verification.success) {
@@ -61,6 +66,11 @@ export function useBiometrics() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, assertionResponse }),
       });
+      
+      if (!verificationRes.ok) {
+        const errorText = await verificationRes.text();
+        throw new Error(errorText || 'Failed to verify login');
+      }
       const verification = await verificationRes.json();
 
       if (verification.success) {

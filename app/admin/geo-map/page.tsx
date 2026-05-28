@@ -30,9 +30,9 @@ export default function GeoMapPage() {
 
   // Calculate statistics from the location data
   const stats = useMemo(() => {
-    const suspicious = locations.filter(l => l.is_suspicious).length;
-    const countries = new Set(locations.map(l => l.country)).size;
-    const cities = new Set(locations.map(l => l.city)).size;
+    const suspicious = (locations as GeoLocation[]).filter((l: GeoLocation) => l.is_suspicious).length;
+    const countries = new Set((locations as GeoLocation[]).map((l: GeoLocation) => l.country)).size;
+    const cities = new Set((locations as GeoLocation[]).map((l: GeoLocation) => l.city)).size;
     return { suspicious, countries, cities };
   }, [locations]);
 
@@ -80,7 +80,7 @@ export default function GeoMapPage() {
                         <p className="text-muted-foreground text-sm font-medium">No active signals detected</p>
                       ) : null}
                       
-                      {locations.map((loc, i) => (
+                      {(locations as GeoLocation[]).map((loc: GeoLocation, i: number) => (
                         <div 
                           key={loc.id}
                           className={`absolute w-3 h-3 rounded-full animate-ping ${loc.is_suspicious ? 'bg-destructive' : 'bg-primary'}`}
@@ -93,7 +93,7 @@ export default function GeoMapPage() {
                       ))}
 
                       {/* Static indicators for suspicious regions */}
-                      {locations.filter(l => l.is_suspicious).map((loc) => (
+                      {(locations as GeoLocation[]).filter((l: GeoLocation) => l.is_suspicious).map((loc: GeoLocation) => (
                          <div 
                           key={`susp-${loc.id}`}
                           className="absolute flex flex-col items-center pointer-events-none"
@@ -104,7 +104,7 @@ export default function GeoMapPage() {
                         >
                            <AlertTriangle className="w-5 h-5 text-destructive mb-1 animate-bounce" />
                            <div className="bg-destructive/90 text-white text-[8px] px-2 py-0.5 rounded font-bold uppercase backdrop-blur-md">
-                               Threat
+                                Threat
                            </div>
                         </div>
                       ))}
@@ -130,7 +130,7 @@ export default function GeoMapPage() {
                    </CardHeader>
                    <CardContent>
                       <div className="space-y-4">
-                         {locations.filter(l => l.is_suspicious).slice(0, 5).map((loc) => (
+                         {(locations as GeoLocation[]).filter((l: GeoLocation) => l.is_suspicious).slice(0, 5).map((loc: GeoLocation) => (
                             <div key={loc.id} className="flex items-center justify-between p-2 rounded hover:bg-muted/50 transition-colors">
                                <div className="flex items-center gap-3">
                                   <MapPin className="w-4 h-4 text-destructive" />

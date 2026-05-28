@@ -19,9 +19,9 @@ const LandingNavbar = () => {
 
   const navLinks = [
     { name: 'Features', href: '#features' },
+    { name: 'Use Cases', href: '#use-cases' },
     { name: 'Security', href: '#security' },
-    { name: 'Analytics', href: '#analytics' },
-    { name: 'Pricing', href: '#pricing' },
+    { name: 'Pricing', href: '/pricing' },
   ];
 
   return (

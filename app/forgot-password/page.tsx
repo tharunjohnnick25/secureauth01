@@ -28,8 +28,19 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMessage = 'Failed to process request';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
 
       setSubmitted(true);
       toast.success('Password reset link sent to your email');

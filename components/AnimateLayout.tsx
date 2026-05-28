@@ -3,26 +3,26 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
+// ✅ FIX: Removed blur() animation — it's extremely GPU-expensive and causes jank.
+// Reduced durations from 500ms/300ms to 200ms/150ms.
+// Changed mode from "wait" to "popLayout" so the new page doesn't wait for exit animation.
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 10,
-    filter: 'blur(10px)',
+    y: 8,
   },
   animate: {
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     transition: {
-      duration: 0.5,
+      duration: 0.2,
+      ease: 'easeOut',
     },
   },
   exit: {
     opacity: 0,
-    y: -10,
-    filter: 'blur(10px)',
     transition: {
-      duration: 0.3,
+      duration: 0.15,
     },
   },
 };
@@ -31,7 +31,7 @@ export default function AnimateLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="popLayout">
       <motion.div
         key={pathname}
         variants={pageVariants}

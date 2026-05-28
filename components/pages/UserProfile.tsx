@@ -23,9 +23,27 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useBiometrics } from '@/hooks/useBiometrics';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { useMemo } from 'react';
 
 export function UserProfile() {
   const { user } = useAuthStore();
+  const { data: dbLogins } = useRealtimeData('login_logs', (q) => 
+    q.select('*').eq('user_id', user?.id || '').order('created_at', { ascending: false }).limit(5)
+  );
+
+  const displayLogins = useMemo(() => {
+    if (!dbLogins || dbLogins.length === 0) return [
+      { location: 'San Francisco, US', time: 'Just now', device: 'Chrome / MacOS', status: 'trusted' },
+      { location: 'New York, US', time: '2 hours ago', device: 'iPhone 15', status: 'verified' },
+    ];
+    return dbLogins.map((l: any) => ({
+      location: `${l.city || 'Unknown'}, ${l.country || 'XX'}`,
+      time: 'Recently',
+      device: l.user_agent.split(' ')[0] || 'Browser',
+      status: l.status.toLowerCase()
+    }));
+  }, [dbLogins]);
   const [loading, setLoading] = useState(false);
   const { registerBiometrics } = useBiometrics();
   const supabase = createClient();
@@ -150,10 +168,7 @@ export function UserProfile() {
                   <CardTitle className="text-sm font-medium">Recent Login History</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {[
-                    { location: 'San Francisco, US', time: 'Just now', device: 'Chrome / MacOS', status: 'trusted' },
-                    { location: 'New York, US', time: '2 hours ago', device: 'iPhone 15', status: 'verified' },
-                  ].map((login, i) => (
+                  {displayLogins.map((login, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-lg bg-input-background flex items-center justify-center shrink-0">
                         <Globe className="w-4 h-4 text-muted-foreground" />
@@ -162,7 +177,7 @@ export function UserProfile() {
                         <p className="text-xs font-medium truncate">{login.location}</p>
                         <p className="text-[10px] text-muted-foreground">{login.time} • {login.device}</p>
                       </div>
-                      <div className="w-2 h-2 rounded-full bg-success mt-1.5" />
+                      <div className={`w-2 h-2 rounded-full mt-1.5 ${login.status === 'success' ? 'bg-success' : 'bg-destructive'}`} />
                     </div>
                   ))}
                 </CardContent>

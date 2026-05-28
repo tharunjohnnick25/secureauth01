@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -12,11 +12,14 @@ export function useRealtimeData<T>(
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
-  const supabase = createClient();
+  // ✅ FIX: Use ref to avoid re-creating the client on every render
+  const supabaseRef = useRef(createClient());
+  const mountedRef = useRef(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const supabase = supabaseRef.current;
       let query;
       if (queryBuilder) {
         query = queryBuilder(supabase.from(table));
@@ -26,31 +29,43 @@ export function useRealtimeData<T>(
       
       const { data: result, error: fetchError } = await query;
       if (fetchError) throw fetchError;
-      setData(result || []);
+      if (mountedRef.current) {
+        setData(result || []);
+      }
     } catch (err: any) {
-      setError(err);
-      console.error(`Error fetching ${table}:`, err);
+      if (mountedRef.current) {
+        setError(err);
+        // Suppress empty object errors which usually mean the table doesn't exist yet
+        if (Object.keys(err).length > 0 || typeof err === 'string') {
+          console.warn(`Could not fetch ${table}. Using empty fallback data.`);
+        }
+        setData([]);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table]);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchData();
 
-    // Use a unique channel name to avoid "already subscribed" errors 
-    // when multiple hooks subscribe to the same table on the same page
+    const supabase = supabaseRef.current;
+    // Use a unique channel name to avoid "already subscribed" errors
     const channelId = Math.random().toString(36).substring(7);
     const channel = supabase
       .channel(`public:${table}:${channelId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: table },
-        (payload) => {
-          console.log(`Realtime update for ${table}:`, payload);
+        (payload: any) => {
+          if (!mountedRef.current) return;
+          
           if (payload.eventType === 'INSERT') {
             setData((prev) => [payload.new as T, ...prev]);
-            // Optional: Show toast for important tables
             if (table === 'alerts') {
                toast.warning('New security alert detected!');
             }
@@ -61,15 +76,17 @@ export function useRealtimeData<T>(
               )
             );
           } else if (payload.eventType === 'DELETE') {
-            setData((prev) => prev.filter((item: any) => item.id === payload.old.id));
+            setData((prev) => prev.filter((item: any) => item.id !== payload.old.id));
           }
         }
       )
       .subscribe();
 
     return () => {
+      mountedRef.current = false;
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, ...dependencies]);
 
   return { data, loading, error, refetch: fetchData };

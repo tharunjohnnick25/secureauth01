@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
@@ -44,6 +46,21 @@ const eventStats = [
 ];
 
 export function SecurityEvents() {
+  const { data: dbEvents } = useRealtimeData('threat_logs');
+
+  const events = useMemo(() => {
+    if (!dbEvents || dbEvents.length === 0) return securityEvents;
+    return dbEvents.map((e: any) => ({
+      id: e.id.substring(0, 8),
+      type: e.type,
+      severity: e.severity?.toLowerCase() || 'medium',
+      source: e.source_ip || 'Internal',
+      target: 'System',
+      status: 'Active',
+      timestamp: new Date(e.created_at).toLocaleString()
+    }));
+  }, [dbEvents]);
+
   return (
     <div className="min-h-screen bg-[#020617] text-white">
       <Sidebar />
@@ -130,7 +147,7 @@ export function SecurityEvents() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {securityEvents.map((event) => (
+                {events.map((event) => (
                   <div
                     key={event.id}
                     className="p-4 rounded-lg bg-input-background/30 hover:bg-input-background/50 transition-colors"
