@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface LocationData {
   latitude: number;
@@ -14,7 +14,10 @@ export function useLocation() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const requestLocation = () => {
+  // useCallback with [] so the function reference is stable across renders.
+  // Without this, every render creates a new function object — if anything
+  // depends on this reference it would cause an infinite update loop.
+  const requestLocation = useCallback(() => {
     setLoading(true);
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by your browser');
@@ -52,7 +55,7 @@ export function useLocation() {
         setLoading(false);
       }
     );
-  };
+  }, []); // stable reference — no deps needed as it only uses setters
 
   return { location, error, loading, requestLocation };
 }

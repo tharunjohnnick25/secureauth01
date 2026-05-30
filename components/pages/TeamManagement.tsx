@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/Button';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { Input } from '@/components/Input';
 import { 
   Users, 
@@ -52,23 +53,20 @@ export function TeamManagement() {
       <Sidebar />
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-4 sm:p-6 lg:p-8">
-          <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold mb-2">User Directory</h1>
-              <p className="text-muted-foreground">Manage enterprise access and identity profiles</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" className="gap-2" onClick={handleExport}>
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
-              <Button className="gap-2">
-                <UserPlus className="w-4 h-4" />
-                Invite Member
-              </Button>
-            </div>
-          </div>
+        <main className="pt-24 p-4 sm:p-6 lg:p-8">
+          <DashboardHeader 
+            title="User Directory" 
+            description="Manage enterprise access and identity profiles"
+          >
+            <Button variant="outline" className="gap-2" onClick={handleExport}>
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+            <Button className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              Invite Member
+            </Button>
+          </DashboardHeader>
 
           <Card className="mb-6">
             <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, Smartphone, Key, ArrowRight, CheckCircle2, Copy, Download } from 'lucide-react';
+import { Shield, Smartphone, Key, ArrowRight, CheckCircle2, Copy, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
 
 export default function MfaSetupPage() {
   const [step, setStep] = useState(1);
@@ -15,6 +16,28 @@ export default function MfaSetupPage() {
   const [recoveryCodes] = useState([
     'A8B2-9X2Z-P9K1', 'L0M4-Q7W6-R3T9', 'C5N1-Y8U2-I4O6', 'S9D3-F2G7-H5J1'
   ]);
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
+
+  const startEnrollment = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp'
+      });
+      if (error) throw error;
+      
+      setFactorId(data.id);
+      setQrCode(data.totp.qr_code);
+      setSecret(data.totp.secret);
+      setStep(2);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleVerify = async () => {
     if (verificationCode.length !== 6) {
@@ -22,11 +45,27 @@ export default function MfaSetupPage() {
       return;
     }
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setLoading(false);
-    setStep(3);
-    toast.success('MFA successfully enabled!');
+    try {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: factorId!
+      });
+      if (challengeError) throw challengeError;
+
+      const { data, error } = await supabase.auth.mfa.verify({
+        factorId: factorId!,
+        challengeId: challenge.id,
+        code: verificationCode
+      });
+      
+      if (error) throw error;
+
+      setStep(3);
+      toast.success('MFA successfully enabled!');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -57,7 +96,8 @@ export default function MfaSetupPage() {
             <p className="text-gray-300">Choose how you want to receive your second-factor authentication codes.</p>
             <div className="grid gap-4">
               <button 
-                onClick={() => setStep(2)}
+                onClick={startEnrollment}
+                disabled={loading}
                 className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-left group"
               >
                 <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
@@ -86,23 +126,22 @@ export default function MfaSetupPage() {
         {step === 2 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
             <div className="flex flex-col md:flex-row gap-8 items-center">
-              <div className="bg-white p-4 rounded-2xl w-48 h-48 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                {/* Mock QR Code */}
-                <div className="w-36 h-36 bg-black relative flex items-center justify-center overflow-hidden rounded-lg">
-                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20" />
-                   <div className="grid grid-cols-4 grid-rows-4 gap-2">
-                     {[...Array(16)].map((_, i) => (
-                       <div key={i} className={`w-6 h-6 ${Math.random() > 0.5 ? 'bg-white' : 'bg-transparent'}`} />
-                     ))}
-                   </div>
-                </div>
+              <div className="bg-white p-4 rounded-2xl w-48 h-48 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                {qrCode ? (
+                  <img src={qrCode} alt="MFA QR Code" className="w-full h-full" />
+                ) : (
+                  <div className="w-36 h-36 bg-black relative flex items-center justify-center overflow-hidden rounded-lg">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20" />
+                    <Loader2 className="animate-spin text-blue-500" />
+                  </div>
+                )}
               </div>
               <div className="flex-1 space-y-4">
-                <h3 className="font-bold text-lg">Scan this QR Code</h3>
-                <p className="text-sm text-gray-400">Open your authenticator app and scan the code. If you can't scan it, enter the secret manually:</p>
+                <h3 className="font-bold text-lg text-white">Scan this QR Code</h3>
+                <p className="text-sm text-gray-400">Open your authenticator app (Google Authenticator, Authy, etc.) and scan the code. If you can't scan it, enter the secret manually:</p>
                 <div className="flex items-center gap-2 p-3 bg-white/5 rounded-lg border border-white/10 font-mono text-xs">
-                  <span className="flex-1 text-blue-400">JBSW-Y3DP-EHPK-3PXP</span>
-                  <button onClick={() => copyToClipboard('JBSW-Y3DP-EHPK-3PXP')} className="hover:text-white"><Copy className="w-4 h-4" /></button>
+                  <span className="flex-1 text-blue-400 break-all">{secret || 'Generating...'}</span>
+                  {secret && <button onClick={() => copyToClipboard(secret)} className="hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>}
                 </div>
               </div>
             </div>

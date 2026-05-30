@@ -14,10 +14,10 @@ export default function Page() {
     const suspicious = threatLogs?.length || 0;
     
     return [
-      { title: 'Active On-Site', value: active.toString(), trend: '+12%', trendUp: true, icon: Users },
-      { title: 'Remote Logins', value: '891', trend: '+5%', trendUp: true, icon: LogIn },
-      { title: 'Suspicious Locations', value: suspicious.toString(), trend: 'Active', trendUp: true, icon: ShieldAlert },
-      { title: 'Monitored Offices', value: '12', icon: MapPin },
+      { title: 'Active On-Site', value: active.toString(), trend: '+12%', trendUp: true, icon: Users, href: '/office-logins/onsite' },
+      { title: 'Remote Logins', value: '891', trend: '+5%', trendUp: true, icon: LogIn, href: '/office-logins/remote' },
+      { title: 'Suspicious Locations', value: suspicious.toString(), trend: 'Active', trendUp: true, icon: ShieldAlert, href: '/office-logins/suspicious' },
+      { title: 'Monitored Offices', value: '12', icon: MapPin, href: '/office-logins/offices' },
     ];
   }, [dbLogs, threatLogs]);
 

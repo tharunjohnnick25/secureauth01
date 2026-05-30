@@ -1,11 +1,21 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'USER';
+export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'ORGANIZATION_OWNER'
+  | 'ORGANIZATION_ADMIN'
+  | 'SECURITY_ANALYST'
+  | 'HR_MANAGER'
+  | 'TEAM_MANAGER'
+  | 'EMPLOYEE'
+  | 'GUEST_USER'
+  | 'ADMIN'  // Retain legacy roles for complete backwards compatibility
+  | 'USER';
 
 export interface User {
   id: string;
   email: string;
   full_name?: string;
   avatar_url?: string;
-  role: UserRole;
+  role: string; // Keep as string for dynamic DB roles compatibility
   organization_id?: string;
   created_at: string;
   last_login?: string;

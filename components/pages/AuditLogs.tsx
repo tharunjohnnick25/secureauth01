@@ -49,7 +49,7 @@ export function AuditLogs() {
       <Sidebar />
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-4 sm:p-6 lg:p-8">
+        <main className="pt-24 p-4 sm:p-6 lg:p-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold mb-2">Audit Logs</h1>

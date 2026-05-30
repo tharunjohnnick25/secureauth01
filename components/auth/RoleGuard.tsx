@@ -3,7 +3,8 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { UserRole } from "@/types/auth"
-// import { useAuth } from "@/hooks/useAuth" // Placeholder hook
+import { useAuthStore } from "@/store/useAuthStore"
+import { ROLE_HIERARCHY } from "@/lib/rbac"
 
 interface RoleGuardProps {
   children: React.ReactNode
@@ -12,25 +13,32 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ children, requiredRole, fallback }: RoleGuardProps) {
-  const router = useRouter()
-  // const { user, isLoading } = useAuth()
+  const { user, isAuthenticated } = useAuthStore()
   
-  // For now, mock the user role
-  const user = { role: 'SUPER_ADMIN' as UserRole } // Mock data
-  const isLoading = false
-
-  if (isLoading) {
-    return <div>Loading...</div> // Should use a proper Skeleton component
+  if (!isAuthenticated || !user) {
+    if (fallback) return <>{fallback}</>
+    return null
   }
 
-  const hasRequiredRole = Array.isArray(requiredRole)
-    ? requiredRole.includes(user?.role as UserRole)
-    : user?.role === requiredRole
+  const userRole = (user.role || 'EMPLOYEE').toUpperCase() as UserRole;
+  const userWeight = ROLE_HIERARCHY[userRole] || 0;
 
-  if (!user || !hasRequiredRole) {
-    if (fallback) return <>{fallback}</>
+  let hasRequiredRole = false;
+
+  if (Array.isArray(requiredRole)) {
+    // True if user has any of the specific roles OR is a higher authority than the highest required role
+    const specificMatch = requiredRole.map(r => r.toUpperCase() as UserRole).includes(userRole);
+    const maximumRequiredWeight = Math.max(...requiredRole.map(r => ROLE_HIERARCHY[r.toUpperCase() as UserRole] || 0));
     
-    // Default fallback: show nothing or redirect
+    hasRequiredRole = specificMatch || userWeight >= maximumRequiredWeight;
+  } else {
+    // True if user matches exactly OR is hierarchical superior
+    const requiredWeight = ROLE_HIERARCHY[requiredRole.toUpperCase() as UserRole] || 0;
+    hasRequiredRole = userWeight >= requiredWeight;
+  }
+
+  if (!hasRequiredRole) {
+    if (fallback) return <>{fallback}</>
     return null
   }
 

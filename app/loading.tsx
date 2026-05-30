@@ -1,17 +1,38 @@
+'use client';
+
+import { Shield, Loader2 } from 'lucide-react';
+
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-t-2 border-l-2 border-blue-500 animate-spin" style={{ animationDuration: '0.8s' }}></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            {/* Pure SVG shield icon — no lucide-react import needed in Server Component */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
-            </svg>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-cyber-dark)] overflow-hidden relative">
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--color-cyber-blue)] opacity-[0.03] rounded-full blur-[120px] animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-600 opacity-[0.03] rounded-full blur-[120px] animate-pulse delay-700"></div>
+
+      <div className="z-10 flex flex-col items-center animate-in fade-in duration-500">
+        <div className="relative mb-8">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-cyber-blue)] to-purple-600 flex items-center justify-center shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+            <Shield className="text-white w-10 h-10" />
           </div>
+          <div className="absolute -inset-2 bg-[var(--color-cyber-blue)]/20 blur-xl rounded-full animate-pulse"></div>
         </div>
-        <h2 className="mt-4 text-sm font-semibold text-white/60 tracking-widest uppercase">Loading...</h2>
+        
+        <h2 className="text-2xl font-bold text-white tracking-widest mb-2">SECURE<span className="text-[var(--color-cyber-blue)]">AUTH</span></h2>
+        <div className="flex items-center gap-3 text-gray-400">
+           <Loader2 className="w-4 h-4 animate-spin text-[var(--color-cyber-blue)]" />
+           <span className="text-xs uppercase font-bold tracking-[0.3em] animate-pulse">Initializing Virtual Secure Node...</span>
+        </div>
+      </div>
+
+      <div className="fixed bottom-8 left-0 right-0 px-8">
+         <div className="max-w-xs mx-auto space-y-2">
+            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+               <div className="h-full bg-[var(--color-cyber-blue)] w-1/3 animate-[progress_2s_infinite_ease-in-out]"></div>
+            </div>
+            <div className="flex justify-between text-[8px] font-bold text-gray-500 uppercase tracking-tighter">
+               <span>Loading Kernel</span>
+               <span>Verifying State</span>
+            </div>
+         </div>
       </div>
     </div>
   );

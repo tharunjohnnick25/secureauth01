@@ -1,4 +1,6 @@
 import { AuthGuardWrapper } from '@/components/auth/AuthGuardWrapper';
+import { AuthProvider } from '@/components/auth/AuthProvider';
+import { OrganizationProvider } from '@/context/OrganizationContext';
 import AnimateLayout from '@/components/AnimateLayout';
 import { Toaster } from 'sonner';
 import { SessionTimeout } from '@/components/SessionTimeout';
@@ -58,12 +60,16 @@ export default function RootLayout({
         </div>
         
         <main className="flex-1">
-          <SessionTimeout />
-          <AuthGuardWrapper>
-            <AnimateLayout>
-              {children}
-            </AnimateLayout>
-          </AuthGuardWrapper>
+          <AuthProvider>
+            <OrganizationProvider>
+              <SessionTimeout />
+              <AuthGuardWrapper>
+                <AnimateLayout>
+                  {children}
+                </AnimateLayout>
+              </AuthGuardWrapper>
+            </OrganizationProvider>
+          </AuthProvider>
         </main>
 
         <Toaster 

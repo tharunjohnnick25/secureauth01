@@ -1,5 +1,5 @@
-'use client';
-
+import React, { useState, useEffect } from 'react';
+import { DashboardService } from "@/lib/services/dashboard";
 import {
   Users,
   Shield,
@@ -111,75 +111,116 @@ const securityAlerts = [
 ];
 
 export function Dashboard() {
+  const [stats, setStats] = useState<any>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [s, act, al] = await Promise.all([
+          DashboardService.getStats(),
+          DashboardService.getRecentActivities(),
+          DashboardService.getSecurityAlerts()
+        ]);
+        setStats(s);
+        setActivities(act);
+        setAlerts(al);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-64 bg-white/5 rounded animate-pulse"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white/5 rounded-lg animate-pulse" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-[300px] bg-white/5 rounded-lg animate-pulse" />
+          <div className="h-[300px] bg-white/5 rounded-lg animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900">
+        <h2 className="text-2xl font-semibold text-white">
           Security Dashboard
         </h2>
-        <p className="text-gray-600 mt-1">
+        <p className="text-gray-400 mt-1">
           Real-time overview of your enterprise security posture
         </p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="glass-card p-6 rounded-lg border border-white/10 bg-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-3xl font-semibold text-gray-900 mt-2">500</p>
-              <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" />
-                <span>+12% this month</span>
+              <p className="text-sm text-gray-400 font-medium">Total Users</p>
+              <p className="text-3xl font-bold text-white mt-2">{stats?.totalUsers || 0}</p>
+              <p className="text-sm text-blue-400 mt-2 flex items-center gap-1 font-semibold">
+                <Shield className="w-4 h-4" />
+                <span>Active Protection</span>
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+              <Users className="w-6 h-6 text-blue-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="glass-card p-6 rounded-lg border border-white/10 bg-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Sessions</p>
-              <p className="text-3xl font-semibold text-gray-900 mt-2">287</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Across all platforms
+              <p className="text-sm text-gray-400 font-medium">Active Sessions</p>
+              <p className="text-3xl font-bold text-white mt-2">{stats?.activeSessions || 0}</p>
+              <p className="text-sm text-green-400 mt-2 flex items-center gap-1 font-semibold">
+                <Activity className="w-4 h-4" />
+                <span>Live Traffic</span>
               </p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Activity className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              <Activity className="w-6 h-6 text-green-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="glass-card p-6 rounded-lg border border-white/10 bg-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Failed Attempts</p>
-              <p className="text-3xl font-semibold text-gray-900 mt-2">24</p>
-              <p className="text-sm text-amber-600 mt-2">Last 24 hours</p>
+              <p className="text-sm text-gray-400 font-medium">Failed Attempts</p>
+              <p className="text-3xl font-bold text-white mt-2">{stats?.failedAttempts || 0}</p>
+              <p className="text-sm text-red-400 mt-2 font-semibold">Last 24 hours</p>
             </div>
-            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+              <AlertTriangle className="w-6 h-6 text-red-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="glass-card p-6 rounded-lg border border-white/10 bg-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">MFA Enabled</p>
-              <p className="text-3xl font-semibold text-gray-900 mt-2">94%</p>
-              <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+              <p className="text-sm text-gray-400 font-medium">MFA Coverage</p>
+              <p className="text-3xl font-bold text-white mt-2">{stats?.mfaEnabledPercent || 0}%</p>
+              <p className="text-sm text-purple-400 mt-2 flex items-center gap-1 font-semibold">
                 <CheckCircle className="w-4 h-4" />
-                <span>470 users</span>
+                <span>Zero Trust Active</span>
               </p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+              <Shield className="w-6 h-6 text-purple-400" />
             </div>
           </div>
         </div>
@@ -188,29 +229,35 @@ export function Dashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Authentication Trends */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="font-semibold text-gray-900 mb-4">
+        <div className="glass-card p-6 rounded-xl border border-white/10 bg-[#0A0F1D]">
+          <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-blue-400" />
             Authentication Activity
           </h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={authData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                itemStyle={{ color: '#fff' }}
+              />
               <Legend />
               <Line
                 type="monotone"
                 dataKey="success"
                 stroke="#10B981"
-                strokeWidth={2}
+                strokeWidth={3}
+                dot={{ fill: '#10B981', r: 4 }}
                 name="Successful"
               />
               <Line
                 type="monotone"
                 dataKey="failed"
                 stroke="#EF4444"
-                strokeWidth={2}
+                strokeWidth={3}
+                dot={{ fill: '#EF4444', r: 4 }}
                 name="Failed"
               />
             </LineChart>
@@ -218,8 +265,11 @@ export function Dashboard() {
         </div>
 
         {/* User Roles Distribution */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="font-semibold text-gray-900 mb-4">User Roles Distribution</h3>
+        <div className="glass-card p-6 rounded-xl border border-white/10 bg-[#0A0F1D]">
+          <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+            <Users className="w-4 h-4 text-purple-400" />
+            Role Distribution
+          </h3>
           <div className="flex items-center justify-center">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -239,7 +289,9 @@ export function Dashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                   contentStyle={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -247,84 +299,100 @@ export function Dashboard() {
       </div>
 
       {/* Security Alerts & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
         {/* Security Alerts */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Security Alerts</h3>
+        <div className="glass-card rounded-xl border border-white/10 bg-[#0A0F1D] overflow-hidden">
+          <div className="p-6 border-b border-white/5 bg-white/5">
+            <h3 className="font-bold text-white flex items-center gap-2">
+               <AlertTriangle className="w-5 h-5 text-amber-500" />
+               Security Alerts
+            </h3>
           </div>
-          <div className="divide-y divide-gray-200">
-            {securityAlerts.map((alert) => (
-              <div key={alert.id} className="p-4">
-                <div className="flex items-start gap-3">
+          <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+            {alerts.length > 0 ? alerts.map((alert) => (
+              <div key={alert.id} className="p-5 hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-start gap-4">
                   <div
-                    className={`w-2 h-2 rounded-full mt-2 ${
-                      alert.severity === "high"
-                        ? "bg-red-500"
+                    className={`w-3 h-3 rounded-full mt-1.5 shadow-[0_0_10px_currentColor] ${
+                      alert.severity === "high" || alert.severity === "critical"
+                        ? "text-red-500 bg-red-500"
                         : alert.severity === "medium"
-                        ? "bg-amber-500"
-                        : "bg-blue-500"
+                        ? "text-amber-500 bg-amber-500"
+                        : "text-blue-500 bg-blue-500"
                     }`}
                   ></div>
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-1.5">
                       <span
-                        className={`text-sm font-medium ${
-                          alert.severity === "high"
-                            ? "text-red-700"
+                        className={`text-sm font-bold uppercase tracking-wider ${
+                          alert.severity === "high" || alert.severity === "critical"
+                            ? "text-red-400"
                             : alert.severity === "medium"
-                            ? "text-amber-700"
-                            : "text-blue-700"
+                            ? "text-amber-400"
+                            : "text-blue-400"
                         }`}
                       >
                         {alert.type}
                       </span>
-                      <span className="text-xs text-gray-500">{alert.time}</span>
+                      <span className="text-xs text-gray-500 font-medium">
+                        {new Date(alert.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-700">{alert.message}</p>
+                    <p className="text-sm text-gray-300 leading-relaxed">{alert.message}</p>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="p-10 text-center">
+                 <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-4 opacity-50" />
+                 <p className="text-gray-500 text-sm">No security threats detected</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Recent Activity</h3>
+        <div className="glass-card rounded-xl border border-white/10 bg-[#0A0F1D] overflow-hidden">
+          <div className="p-6 border-b border-white/5 bg-white/5">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-500" />
+              Recent Activity
+            </h3>
           </div>
-          <div className="divide-y divide-gray-200">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="p-4">
+          <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+            {activities.length > 0 ? activities.map((activity) => (
+              <div key={activity.id} className="p-5 hover:bg-white/[0.02] transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-bold text-white tracking-tight">
                       {activity.user}
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-400 mt-1 font-medium">
                       {activity.action}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      IP: {activity.ip} • {activity.timestamp}
-                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                       <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                         IP: {activity.ip}
+                       </p>
+                       <span className="text-[10px] text-gray-600 font-bold">{new Date(activity.timestamp).toLocaleString()}</span>
+                    </div>
                   </div>
                   <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${
                       activity.status === "success"
-                        ? "bg-green-100 text-green-700"
-                        : activity.status === "warning"
-                        ? "bg-amber-100 text-amber-700"
-                        : activity.status === "danger"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-green-500/10 text-green-400 border-green-500/20"
+                        : "bg-red-500/10 text-red-400 border-red-500/20"
                     }`}
                   >
                     {activity.status}
                   </span>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="p-10 text-center">
+                 <p className="text-gray-500 text-sm">No recent activity found</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

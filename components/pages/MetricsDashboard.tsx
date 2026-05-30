@@ -7,12 +7,17 @@ import { Card } from '@/components/Card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { motion } from 'framer-motion';
 
+import { DashboardHeader } from '@/components/DashboardHeader';
+
+import Link from 'next/link';
+
 interface MetricCard {
   title: string;
   value: string | number;
   trend?: string;
   icon?: any;
   trendUp?: boolean;
+  href?: string;
 }
 
 interface MetricsDashboardProps {
@@ -31,10 +36,7 @@ export function MetricsDashboard({ title, description, metrics, chartData, barDa
       <div className="lg:ml-64 transition-all duration-300 flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 p-6 lg:p-8 pt-24 overflow-x-hidden">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-1 tracking-tight">{title}</h1>
-            <p className="text-gray-400">{description}</p>
-          </div>
+          <DashboardHeader title={title} description={description} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {metrics.map((m, i) => (
@@ -44,20 +46,22 @@ export function MetricsDashboard({ title, description, metrics, chartData, barDa
                 transition={{ delay: i * 0.1 }}
                 key={i}
               >
-                <Card className="p-6 bg-black/40 backdrop-blur-xl border-white/10 hover:border-blue-500/30 transition-colors">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-sm font-medium text-gray-400">{m.title}</h3>
-                    {m.icon && <m.icon className="w-5 h-5 text-blue-400" />}
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{m.value}</span>
-                    {m.trend && (
-                      <span className={`text-xs font-semibold ${m.trendUp ? 'text-green-400' : 'text-red-400'}`}>
-                        {m.trend}
-                      </span>
-                    )}
-                  </div>
-                </Card>
+                <Link href={m.href || '#'}>
+                  <Card className="p-6 bg-black/40 backdrop-blur-xl border-white/10 hover:border-blue-500/30 transition-all hover:scale-[1.02] cursor-pointer">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-sm font-medium text-gray-400">{m.title}</h3>
+                      {m.icon && <m.icon className="w-5 h-5 text-blue-400" />}
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold">{m.value}</span>
+                      {m.trend && (
+                        <span className={`text-xs font-semibold ${m.trendUp ? 'text-green-400' : 'text-red-400'}`}>
+                          {m.trend}
+                        </span>
+                      )}
+                    </div>
+                  </Card>
+                </Link>
               </motion.div>
             ))}
           </div>

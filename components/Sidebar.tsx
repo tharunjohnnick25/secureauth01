@@ -154,7 +154,7 @@ export function Sidebar() {
       initial={{ x: -250 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.5 }}
-      className="fixed left-0 top-0 h-full w-64 glass-sidebar z-40 hidden lg:block border-r border-white/10"
+      className="fixed left-0 top-0 h-full w-64 glass-sidebar z-[45] hidden lg:block border-r border-white/10"
     >
       <SidebarContent />
     </motion.aside>

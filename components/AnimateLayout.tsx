@@ -1,12 +1,12 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
 // ✅ FIX: Removed blur() animation — it's extremely GPU-expensive and causes jank.
 // Reduced durations from 500ms/300ms to 200ms/150ms.
 // Changed mode from "wait" to "popLayout" so the new page doesn't wait for exit animation.
-const pageVariants = {
+const pageVariants: Variants = {
   initial: {
     opacity: 0,
     y: 8,

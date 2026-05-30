@@ -1,15 +1,28 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import { DataGridPage } from '@/components/pages/DataGridPage';
-import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { DashboardService } from '@/lib/services/dashboard';
 import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 
 export default function Page() {
-  const { data: attendanceData, loading } = useRealtimeData('login_logs', (q) => 
-    q.select('*, users(full_name, email)')
-     .order('created_at', { ascending: false })
-     .limit(100)
-  );
+  const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await DashboardService.getAttendance();
+        setAttendanceData(res);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, []);
 
   const columns = [
     { 
@@ -49,12 +62,20 @@ export default function Page() {
     }
   ];
 
+  if (loading) {
+    return (
+       <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+       </div>
+    );
+  }
+
   return (
     <DataGridPage 
       title="Attendance & Login" 
       description="Monitor daily attendance and active user sessions in real-time."
       columns={columns}
-      data={attendanceData || []}
+      data={attendanceData}
       primaryAction={{ label: 'Export Report', onClick: () => console.log('Exporting...') }}
     />
   );

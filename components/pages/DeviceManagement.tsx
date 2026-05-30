@@ -26,6 +26,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { DashboardHeader } from '@/components/DashboardHeader';
 
 // Mock data for devices
 const initialDevices = [
@@ -97,33 +98,14 @@ export function DeviceManagement() {
         <Navbar />
         
         <main className="pt-24 p-4 sm:p-6 lg:p-8">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                  <Smartphone className="text-blue-400 w-6 h-6" />
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight">Device Management</h1>
-              </div>
-              <p className="text-gray-400">Manage trusted hardware and monitor device-based access</p>
-            </div>
-
-            <div className="flex items-center gap-4">
-               <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input 
-                    type="text" 
-                    placeholder="Search devices..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-blue-500/50 transition-all w-64"
-                  />
-               </div>
-               <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all flex items-center gap-2">
-                 Add Trusted Device
-               </button>
-            </div>
-          </div>
+          <DashboardHeader 
+            title="Device Management" 
+            description="Manage trusted hardware and monitor device-based access"
+          >
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all flex items-center gap-2">
+              Add Trusted Device
+            </button>
+          </DashboardHeader>
 
           {/* Device Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

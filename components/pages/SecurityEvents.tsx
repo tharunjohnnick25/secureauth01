@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/Button';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import {
   Shield,
   AlertTriangle,
@@ -66,25 +67,20 @@ export function SecurityEvents() {
       <Sidebar />
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
-        <main className="pt-20 p-4 sm:p-6 lg:p-8">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold mb-2">Security Events</h1>
-              <p className="text-muted-foreground">
-                Monitor and respond to security events in real-time
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-            </div>
-          </div>
+        <main className="pt-24 p-4 sm:p-6 lg:p-8">
+          <DashboardHeader 
+            title="Security Events" 
+            description="Monitor and respond to security events in real-time"
+          >
+            <Button variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </DashboardHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             {eventStats.map((stat, index) => (

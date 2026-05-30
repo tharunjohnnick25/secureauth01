@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, Activity, ShieldCheck, Globe, Zap } from 'lucide-react';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
@@ -71,10 +72,10 @@ export function Analytics() {
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
         <main className="pt-24 p-4 sm:p-6 lg:p-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-semibold mb-2">Security Analytics</h1>
-            <p className="text-muted-foreground">Deep behavioral insights and threat vector analysis</p>
-          </div>
+          <DashboardHeader 
+            title="Security Analytics" 
+            description="Deep behavioral insights and threat vector analysis"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <Card>

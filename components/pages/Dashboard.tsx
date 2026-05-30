@@ -17,6 +17,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { formatDistanceToNow } from 'date-fns';
+import { DashboardHeader } from '@/components/DashboardHeader';
 
 // ✅ FIX: Single dynamic import for the charts container instead of 10 separate ones.
 // This avoids 10 parallel chunk fetches and their associated waterfall delays.
@@ -119,16 +120,15 @@ export function Dashboard() {
       <div className="lg:ml-64 transition-all duration-300">
         <Navbar />
         <main className="pt-24 p-4 sm:p-6 lg:p-8">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold mb-2">Security Dashboard</h1>
-              <p className="text-muted-foreground">Real-time enterprise-grade IAM monitoring</p>
-            </div>
+          <DashboardHeader 
+            title="Security Dashboard" 
+            description="Real-time enterprise-grade IAM monitoring"
+          >
             <div className="flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
               <Activity className="w-4 h-4 text-primary animate-pulse" />
               <span className="text-sm font-medium text-primary">System Live</span>
             </div>
-          </div>
+          </DashboardHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <Card>

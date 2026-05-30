@@ -1,45 +1,56 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
-export interface TypingMetrics {
-  dwellTime: number[];
-  flightTime: number[];
+export interface TypingPattern {
+  key: string;
+  dwellTime: number;
+  flightTime: number;
 }
 
 export function useTypingBehavior() {
-  const [metrics, setMetrics] = useState<TypingMetrics>({
-    dwellTime: [],
-    flightTime: [],
-  });
-  const [lastKeyDown, setLastKeyDown] = useState<number | null>(null);
-  const [lastKeyUp, setLastKeyUp] = useState<number | null>(null);
+  const [patterns, setPatterns] = useState<TypingPattern[]>([]);
+  const lastKeyDown = useRef<Record<string, number>>({});
+  const lastKeyUpTime = useRef<number | null>(null);
 
-  const handleKeyDown = useCallback((e?: any) => {
-    const now = Date.now();
-    if (lastKeyUp) {
-      setMetrics((prev) => ({
-        ...prev,
-        flightTime: [...prev.flightTime, now - lastKeyUp],
-      }));
-    }
-    setLastKeyDown(now);
-  }, [lastKeyUp]);
+  const handleKeyDown = useCallback((e: React.KeyboardEvent | any) => {
+    const now = performance.now();
+    const key = e.key;
 
-  const handleKeyUp = useCallback((e?: any) => {
-    const now = Date.now();
-    if (lastKeyDown) {
-      setMetrics((prev) => ({
-        ...prev,
-        dwellTime: [...prev.dwellTime, now - lastKeyDown],
-      }));
+    // Track the start of the key press
+    lastKeyDown.current[key] = now;
+  }, []);
+
+  const handleKeyUp = useCallback((e: React.KeyboardEvent | any) => {
+    const now = performance.now();
+    const key = e.key;
+    const keyDownTime = lastKeyDown.current[key];
+
+    if (keyDownTime) {
+      const dwellTime = now - keyDownTime;
+      const flightTime = lastKeyUpTime.current ? now - lastKeyUpTime.current : 0;
+
+      setPatterns(prev => [...prev.slice(-49), { // Keep last 50 samples
+        key,
+        dwellTime,
+        flightTime
+      }]);
+
+      delete lastKeyDown.current[key];
+      lastKeyUpTime.current = now;
     }
-    setLastKeyUp(now);
-  }, [lastKeyDown]);
+  }, []);
 
   const resetMetrics = () => {
-    setMetrics({ dwellTime: [], flightTime: [] });
-    setLastKeyDown(null);
-    setLastKeyUp(null);
+    setPatterns([]);
+    lastKeyDown.current = {};
+    lastKeyUpTime.current = null;
   };
 
-  return { metrics, handleKeyDown, handleKeyUp, resetMetrics };
+  return { 
+    patterns, 
+    handleKeyDown, 
+    handleKeyUp, 
+    resetMetrics,
+    // Add compatibility with old names if needed, but patterns is cleaner
+    metrics: patterns 
+  };
 }

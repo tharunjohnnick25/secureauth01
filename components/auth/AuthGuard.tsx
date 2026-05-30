@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from './AuthProvider';
 import { Shield } from 'lucide-react';
 
 interface AuthGuardProps {
@@ -14,72 +14,69 @@ interface AuthGuardProps {
 export default function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, requiresBiometric, setUser, logout } = useAuthStore();
-  const [hasChecked, setHasChecked] = useState(false);
-  const isCheckingRef = useRef(false);
+  const { session, isLoading } = useAuth();
+  const { user, isAuthenticated, requiresBiometric } = useAuthStore();
 
-  // ✅ FIX: Only run once on mount, not on every route change
   useEffect(() => {
-    // If already authenticated via persisted store, skip the async check immediately
-    if (isAuthenticated && user) {
-      setHasChecked(true);
+    if (isLoading) return;
+
+    if (!session && !isAuthenticated) {
+      router.replace(`/login?redirectTo=${encodeURIComponent(pathname)}`);
       return;
     }
 
-    // Prevent duplicate concurrent calls
-    if (isCheckingRef.current || hasChecked) return;
-    isCheckingRef.current = true;
+    // Role-based and permission-based route protection
+    if (session && user) {
+      const userRole = (user.role || '').toUpperCase();
 
-    const checkAuth = async () => {
-      try {
-        const supabase = createClient();
-        // Give a timeout to getSession to prevent infinite loading
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Auth check timeout')), 5000)
-        );
-
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
-
-        if (session && !isAuthenticated) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email ?? '',
-            role: (session.user.user_metadata?.role as string) ?? 'user',
-            first_name: session.user.user_metadata?.first_name,
-            last_name: session.user.user_metadata?.last_name,
-          });
-        } else if (!session && !isAuthenticated) {
-          const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-          if (!token) {
-            router.replace(`/login?redirectTo=${encodeURIComponent(pathname)}`);
-            return;
-          }
+      // `/admin` routes require administrative privileges
+      if (requireAdmin) {
+        const isAdminRole = ['SUPER_ADMIN', 'ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'ADMIN'].includes(userRole);
+        if (!isAdminRole) {
+          router.replace('/unauthorized');
+          return;
         }
-      } catch (error) {
-        console.error('AuthGuard check failed:', error);
-      } finally {
-        setHasChecked(true);
-        isCheckingRef.current = false;
       }
-    };
+      
+      // Protected modules security rules
+      const isSecurityRoute = 
+        pathname.startsWith('/security') || 
+        pathname.startsWith('/threat-intelligence') || 
+        pathname.startsWith('/incident-response') || 
+        pathname.startsWith('/vulnerability-scanner') || 
+        pathname.startsWith('/forensics') || 
+        pathname.startsWith('/alerts-configuration');
 
-    checkAuth();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Listen to auth state changes once on mount — logout detection
-  useEffect(() => {
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        logout();
-        router.replace('/login');
+      if (isSecurityRoute) {
+        // Must have manage_security permission or view_analytics permission (except employee/guest)
+        const isEmployeeOrGuest = ['EMPLOYEE', 'GUEST_USER', 'employee', 'guest'].includes(user.role || '');
+        const hasSecurityAccess = userRole === 'SECURITY_ANALYST' || userRole === 'SUPER_ADMIN' || userRole === 'ORGANIZATION_OWNER' || userRole === 'ORGANIZATION_ADMIN';
+        
+        if (isEmployeeOrGuest && !hasSecurityAccess) {
+          router.replace('/unauthorized');
+          return;
+        }
       }
-    });
-    return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+      // Audit logs require compliance/admin permissions
+      if (pathname.startsWith('/audit-logs') || pathname.startsWith('/admin/audit')) {
+        const hasAuditAccess = ['SUPER_ADMIN', 'ORGANIZATION_OWNER', 'ORGANIZATION_ADMIN', 'SECURITY_ANALYST', 'HR_MANAGER'].includes(userRole);
+        if (!hasAuditAccess) {
+          router.replace('/unauthorized');
+          return;
+        }
+      }
+
+      // Billing/subscriptions require owner or super admin privileges
+      if (pathname.startsWith('/billing') || pathname.startsWith('/subscription-plans')) {
+        const hasBillingAccess = ['SUPER_ADMIN', 'ORGANIZATION_OWNER'].includes(userRole);
+        if (!hasBillingAccess) {
+          router.replace('/unauthorized');
+          return;
+        }
+      }
+    }
+  }, [session, isAuthenticated, isLoading, pathname, requireAdmin, user, router]);
 
   // Handle biometric requirement
   useEffect(() => {
@@ -88,32 +85,20 @@ export default function AuthGuard({ children, requireAdmin = false }: AuthGuardP
     }
   }, [requiresBiometric, pathname, router]);
 
-  // Handle admin requirement
-  useEffect(() => {
-    if (hasChecked && isAuthenticated && requireAdmin && user?.role !== 'admin') {
-      router.replace('/unauthorized');
-    }
-  }, [hasChecked, isAuthenticated, requireAdmin, user, router]);
-
-  // ✅ FIX: If auth state is persisted in Zustand, render children IMMEDIATELY.
-  // The loading screen only shows when there is genuinely no auth state at all on first visit.
-  if (isAuthenticated) {
-    return <>{children}</>;
-  }
-
-  // Not authenticated and haven't finished checking — show minimal, FAST loading indicator
-  if (!hasChecked && !isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-cyber-dark)]">
-        <div className="relative">
-          <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
-            <Shield className="w-6 h-6 text-primary animate-spin" style={{ animationDuration: '1.5s' }} />
-          </div>
+        <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+          <Shield className="w-6 h-6 text-primary animate-spin" style={{ animationDuration: '1.5s' }} />
         </div>
-        <p className="mt-4 text-primary/70 text-sm animate-pulse">Securing Session...</p>
+        <p className="mt-4 text-primary/70 text-sm animate-pulse tracking-widest uppercase font-bold">Securing Session...</p>
       </div>
     );
   }
 
-  return <>{children}</>;
+  if (isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  return null;
 }

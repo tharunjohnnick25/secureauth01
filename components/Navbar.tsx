@@ -19,10 +19,10 @@ export function Navbar() {
         initial={{ y: -70 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
-        className="fixed top-0 right-0 left-0 lg:left-64 h-16 glass-card border-b border-white/10 z-30"
+        className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-[#020617] border-b border-white/10 z-[50]"
       >
         <div className="flex items-center h-full px-4 lg:px-6 gap-3">
-          {/* Left: Hamburger + Search */}
+          {/* Left: Hamburger only */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <button 
               onClick={() => setIsMobileNavOpen(true)}
@@ -30,9 +30,6 @@ export function Navbar() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="flex-1 min-w-0 max-w-[160px] sm:max-w-xs lg:max-w-md">
-              <GlobalSearch />
-            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
@@ -68,7 +65,7 @@ export function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileNavOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] lg:hidden"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden"
             />
             <motion.div
               initial={{ x: -300 }}

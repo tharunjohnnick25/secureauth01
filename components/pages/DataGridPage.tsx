@@ -8,6 +8,7 @@ import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { Search, Filter, Download, MoreVertical } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { DashboardHeader } from '@/components/DashboardHeader';
 
 interface Column {
   key: string;
@@ -32,28 +33,43 @@ export function DataGridPage({ title, description, columns, data, primaryAction 
     )
   );
 
+  const handleExport = () => {
+    if (!data || data.length === 0) return;
+    
+    const headers = columns.map(col => col.label).join(',');
+    const csvData = data.map(row => 
+      columns.map(col => {
+        const val = row[col.key];
+        return typeof val === 'object' ? JSON.stringify(val).replace(/,/g, ';') : String(val).replace(/,/g, ';');
+      }).join(',')
+    ).join('\n');
+    
+    const blob = new Blob([`${headers}\n${csvData}`], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SecureAuth-${title.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div className="min-h-screen bg-[#020617] text-white">
+    <div className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30">
       <Sidebar />
       <div className="lg:ml-64 transition-all duration-300 flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 p-6 lg:p-8 pt-24 overflow-x-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-1 tracking-tight">{title}</h1>
-              <p className="text-gray-400">{description}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" className="border-white/10 hover:bg-white/5">
-                <Download className="w-4 h-4 mr-2" /> Export
+          <DashboardHeader title={title} description={description}>
+            <Button variant="outline" className="border-white/10 hover:bg-white/5" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" /> Export
+            </Button>
+            {primaryAction && (
+              <Button className="bg-blue-600 hover:bg-blue-500" onClick={primaryAction.onClick}>
+                {primaryAction.label}
               </Button>
-              {primaryAction && (
-                <Button className="bg-blue-600 hover:bg-blue-500" onClick={primaryAction.onClick}>
-                  {primaryAction.label}
-                </Button>
-              )}
-            </div>
-          </div>
+            )}
+          </DashboardHeader>
 
           <Card className="border-white/10 bg-black/40 backdrop-blur-xl">
             <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row gap-4 justify-between items-center">
